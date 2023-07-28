@@ -1,0 +1,43 @@
+name: CI
+
+on: 
+  # Run the jobs on either push or a pull_request, but not both.
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+concurrency:
+  group: ${{ github.ref_name }}-ci
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang:
+          - python
+          - cpp
+          - java
+          - javascript
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Prerequisites
+      shell: bash
+      run: |
+        sudo apt install -y ninja-build libpopt-dev
+
+    - name: Configure Build & Test
+      shell: bash
+      env:
+        CC: ${{ matrix.compiler }}
+      run: ./travis.sh ${{ matrix.config }}
