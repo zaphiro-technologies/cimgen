@@ -32,12 +32,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install Prerequisites
-      shell: bash
       run: |
-        sudo apt install -y ninja-build libpopt-dev
-
+        sudo apt install python
+        curl -sSL https://install.python-poetry.org | python3 -  # install
+        poetry
+        poetry install --no-root # install dependencies
     - name: Configure Build & Test
-      shell: bash
       env:
-        CC: ${{ matrix.compiler }}
-      run: ./travis.sh ${{ matrix.config }}
+        LANG: ${{ matrix.lang }}
+      run: poetry run python build.py --outdir=$(pwd)/CGMES_2.4.15_27JAN2020 --schemadir=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020 --langdir=$LANG
