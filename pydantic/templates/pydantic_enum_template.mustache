@@ -1,0 +1,12 @@
+from .{{sub_class_of}} import {{sub_class_of}}
+from enum import Enum
+
+class {{class_name}}(str,Enum):
+
+    '''
+    {{{class_comment}}}
+    '''
+
+    {{#instances}}
+    {{#setInstances}}{{.}}{{/setInstances}}
+    {{/instances}}

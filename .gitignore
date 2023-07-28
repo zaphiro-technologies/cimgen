@@ -6,3 +6,4 @@ cimpy/*
 *.py[cod]
 __pycache__/
 .vscode/launch.json
+CGMES_2.4.15_27JAN2020_pydantic/
