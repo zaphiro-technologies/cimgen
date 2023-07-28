@@ -31,12 +31,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'poetry'
     - name: Install Prerequisites
       run: |
-        sudo apt install python
-        curl -sSL https://install.python-poetry.org | python3 -  # install
-        poetry
-        poetry install --no-root # install dependencies
+        curl -sSL https://install.python-poetry.org | python3 -
+        poetry install --no-root
     - name: Configure Build & Test
       env:
         LANG: ${{ matrix.lang }}
