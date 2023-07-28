@@ -42,4 +42,6 @@ jobs:
     - name: Configure Build & Test
       env:
         LANG: ${{ matrix.lang }}
-      run: poetry run python build.py --outdir=$(pwd)/CGMES_2.4.15_27JAN2020 --schemadir=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020 --langdir=$LANG
+      run: |
+        poetry run python build.py --outdir=$(pwd)/CGMES_2.4.15_27JAN2020 --schemadir=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020 --langdir=$LANG
+        ls -l $(pwd)/CGMES_2.4.15_27JAN2020
