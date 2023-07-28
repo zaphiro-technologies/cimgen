@@ -4,7 +4,9 @@ from time import time
 import json
 
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class RDFSEntry:
     def __init__(self, jsonObject):
@@ -14,67 +16,81 @@ class RDFSEntry:
     def asJson(self):
         jsonObject = {}
         if self.about() != None:
-            jsonObject['about'] = self.about()
+            jsonObject["about"] = self.about()
         if self.comment() != None:
-            jsonObject['comment'] = self.comment()
+            jsonObject["comment"] = self.comment()
         if self.dataType() != None:
-            jsonObject['dataType'] = self.dataType()
+            jsonObject["dataType"] = self.dataType()
         if self.domain() != None:
-            jsonObject['domain'] = self.domain()
+            jsonObject["domain"] = self.domain()
         if self.fixed() != None:
-            jsonObject['isFixed'] = self.fixed()
+            jsonObject["isFixed"] = self.fixed()
         if self.label() != None:
-            jsonObject['label'] = self.label()
+            jsonObject["label"] = self.label()
         if self.multiplicity() != None:
-            jsonObject['multiplicity'] = self.multiplicity()
+            jsonObject["multiplicity"] = self.multiplicity()
         if self.range() != None:
-            jsonObject['range'] = self.range()
+            jsonObject["range"] = self.range()
         if self.stereotype() != None:
-            jsonObject['stereotype'] = self.stereotype()
+            jsonObject["stereotype"] = self.stereotype()
         if self.type() != None:
-            jsonObject['type'] = self.type()
+            jsonObject["type"] = self.type()
         if self.subClassOf() != None:
-            jsonObject['subClassOf'] = self.subClassOf()
+            jsonObject["subClassOf"] = self.subClassOf()
         if self.inverseRole() != None:
-            jsonObject['inverseRole'] = self.inverseRole()
+            jsonObject["inverseRole"] = self.inverseRole()
         if self.associationUsed() != None:
-            jsonObject['associationUsed'] = self.associationUsed()
+            jsonObject["associationUsed"] = self.associationUsed()
         return jsonObject
 
     def about(self):
-        if '$rdf:about' in self.jsonDefinition:
-            return RDFSEntry._get_rid_of_hash(RDFSEntry._get_about_or_resource(self.jsonDefinition['$rdf:about']))
+        if "$rdf:about" in self.jsonDefinition:
+            return RDFSEntry._get_rid_of_hash(
+                RDFSEntry._get_about_or_resource(self.jsonDefinition["$rdf:about"])
+            )
         else:
             return None
 
     def associationUsed(self):
-        if 'cims:AssociationUsed' in self.jsonDefinition:
-            return RDFSEntry._extract_string(self.jsonDefinition['cims:AssociationUsed'])
+        if "cims:AssociationUsed" in self.jsonDefinition:
+            return RDFSEntry._extract_string(
+                self.jsonDefinition["cims:AssociationUsed"]
+            )
         else:
             return None
 
     def comment(self):
-        if 'rdfs:comment' in self.jsonDefinition:
-            return RDFSEntry._extract_text(self.jsonDefinition['rdfs:comment']).replace('–', '-').replace('“', '"')\
-                        .replace('”', '"').replace('’', "'").replace('°', '[SYMBOL REMOVED]').replace('º', '[SYMBOL REMOVED]').replace('\n', ' ')
+        if "rdfs:comment" in self.jsonDefinition:
+            return (
+                RDFSEntry._extract_text(self.jsonDefinition["rdfs:comment"])
+                .replace("–", "-")
+                .replace("“", '"')
+                .replace("”", '"')
+                .replace("’", "'")
+                .replace("°", "[SYMBOL REMOVED]")
+                .replace("º", "[SYMBOL REMOVED]")
+                .replace("\n", " ")
+            )
         else:
             return None
 
     def dataType(self):
-        if 'cims:dataType' in self.jsonDefinition:
-            return RDFSEntry._extract_string(self.jsonDefinition['cims:dataType'])
+        if "cims:dataType" in self.jsonDefinition:
+            return RDFSEntry._extract_string(self.jsonDefinition["cims:dataType"])
         else:
             return None
 
     def domain(self):
-        if 'rdfs:domain' in self.jsonDefinition:
-            return RDFSEntry._get_rid_of_hash(RDFSEntry._extract_string(self.jsonDefinition['rdfs:domain']))
+        if "rdfs:domain" in self.jsonDefinition:
+            return RDFSEntry._get_rid_of_hash(
+                RDFSEntry._extract_string(self.jsonDefinition["rdfs:domain"])
+            )
         else:
             return None
 
     def fixed(self):
-        if 'cims:isFixed' in self.jsonDefinition:
-            return RDFSEntry._extract_text(self.jsonDefinition['cims:isFixed'])
+        if "cims:isFixed" in self.jsonDefinition:
+            return RDFSEntry._extract_text(self.jsonDefinition["cims:isFixed"])
         else:
             return None
 
@@ -91,39 +107,50 @@ class RDFSEntry:
             return None
 
     def inverseRole(self):
-        if 'cims:inverseRoleName' in self.jsonDefinition:
-            return RDFSEntry._get_rid_of_hash(RDFSEntry._extract_string(self.jsonDefinition['cims:inverseRoleName']))
+        if "cims:inverseRoleName" in self.jsonDefinition:
+            return RDFSEntry._get_rid_of_hash(
+                RDFSEntry._extract_string(self.jsonDefinition["cims:inverseRoleName"])
+            )
         else:
             return None
 
     def label(self):
-        if 'rdfs:label' in self.jsonDefinition:
-            return RDFSEntry._extract_text(self.jsonDefinition['rdfs:label']).replace('–', '-').replace('“', '"')\
-                        .replace('”', '"').replace('’', "'").replace('°', '').replace('\n', ' ')
+        if "rdfs:label" in self.jsonDefinition:
+            return (
+                RDFSEntry._extract_text(self.jsonDefinition["rdfs:label"])
+                .replace("–", "-")
+                .replace("“", '"')
+                .replace("”", '"')
+                .replace("’", "'")
+                .replace("°", "")
+                .replace("\n", " ")
+            )
         else:
             return None
 
     def multiplicity(self):
-        if 'cims:multiplicity' in self.jsonDefinition:
-            return RDFSEntry._get_rid_of_hash(RDFSEntry._extract_string(self.jsonDefinition['cims:multiplicity']))
+        if "cims:multiplicity" in self.jsonDefinition:
+            return RDFSEntry._get_rid_of_hash(
+                RDFSEntry._extract_string(self.jsonDefinition["cims:multiplicity"])
+            )
         else:
             return None
 
     def range(self):
-        if 'rdfs:range' in self.jsonDefinition:
-            return RDFSEntry._extract_string(self.jsonDefinition['rdfs:range'])
+        if "rdfs:range" in self.jsonDefinition:
+            return RDFSEntry._extract_string(self.jsonDefinition["rdfs:range"])
         else:
             return None
 
     def stereotype(self):
-        if 'cims:stereotype' in self.jsonDefinition:
-            return RDFSEntry._extract_string(self.jsonDefinition['cims:stereotype'])
+        if "cims:stereotype" in self.jsonDefinition:
+            return RDFSEntry._extract_string(self.jsonDefinition["cims:stereotype"])
         else:
             return None
 
     def type(self):
-        if 'rdf:type' in self.jsonDefinition:
-            return RDFSEntry._extract_string(self.jsonDefinition['rdf:type'])
+        if "rdf:type" in self.jsonDefinition:
+            return RDFSEntry._extract_string(self.jsonDefinition["rdf:type"])
         else:
             return None
 
@@ -134,17 +161,19 @@ class RDFSEntry:
             return None
 
     def subClassOf(self):
-        if 'rdfs:subClassOf' in self.jsonDefinition:
-            return RDFSEntry._get_rid_of_hash(RDFSEntry._extract_string(self.jsonDefinition['rdfs:subClassOf']))
+        if "rdfs:subClassOf" in self.jsonDefinition:
+            return RDFSEntry._get_rid_of_hash(
+                RDFSEntry._extract_string(self.jsonDefinition["rdfs:subClassOf"])
+            )
         else:
             return None
 
     # Extracts the text out of the dictionary after xmltodict, text is labeled by key '_'
     def _extract_text(object_dic):
         if isinstance(object_dic, list):
-            return object_dic[0]['_']
-        elif '_' in object_dic.keys():
-            return object_dic['_']
+            return object_dic[0]["_"]
+        elif "_" in object_dic.keys():
+            return object_dic["_"]
         else:
             return ""
 
@@ -152,7 +181,7 @@ class RDFSEntry:
     def _extract_string(object_dic):
         if isinstance(object_dic, list):
             if len(object_dic) > 0:
-                if type(object_dic[0]) == 'string' or isinstance(object_dic[0], str):
+                if type(object_dic[0]) == "string" or isinstance(object_dic[0], str):
                     return object_dic[0]
                 return RDFSEntry._get_about_or_resource(object_dic[0])
         return RDFSEntry._get_about_or_resource(object_dic)
@@ -161,32 +190,32 @@ class RDFSEntry:
     # such as "$rdf:about" or "$rdf:resource", this extracts the
     # useful bit
     def _get_literal(object_dic):
-        if '$rdfs:Literal' in object_dic:
-            return object_dic['$rdfs:Literal']
+        if "$rdfs:Literal" in object_dic:
+            return object_dic["$rdfs:Literal"]
         return object_dic
-
 
     # The definitions are often contained within a string with a name
     # such as "$rdf:about" or "$rdf:resource", this extracts the
     # useful bit
     def _get_about_or_resource(object_dic):
-        if '$rdf:resource' in object_dic:
-            return object_dic['$rdf:resource']
-        elif '$rdf:about' in object_dic:
-            return object_dic['$rdf:about']
-        elif '$rdfs:Literal' in object_dic:
-            return object_dic['$rdfs:Literal']
+        if "$rdf:resource" in object_dic:
+            return object_dic["$rdf:resource"]
+        elif "$rdf:about" in object_dic:
+            return object_dic["$rdf:about"]
+        elif "$rdfs:Literal" in object_dic:
+            return object_dic["$rdfs:Literal"]
         return object_dic
 
     # Some names are encoded as #name or http://some-url#name
     # This function returns the name
     def _get_rid_of_hash(name):
-        tokens = name.split('#')
+        tokens = name.split("#")
         if len(tokens) == 1:
             return tokens[0]
         if len(tokens) > 1:
             return tokens[1]
         return name
+
 
 class CIMComponentDefinition:
     def __init__(self, rdfsEntry):
@@ -210,7 +239,7 @@ class CIMComponentDefinition:
         return self.instance_list
 
     def addInstance(self, instance):
-        instance['index'] = len(self.instance_list)
+        instance["index"] = len(self.instance_list)
         self.instance_list.append(instance)
 
     def addAttributes(self, attributes):
@@ -236,8 +265,8 @@ class CIMComponentDefinition:
         self.subclasses = classes
 
     def _simple_float_attribute(attr):
-        if 'dataType' in attr:
-            return attr['label'] == 'value' and attr['dataType'] == '#Float'
+        if "dataType" in attr:
+            return attr["label"] == "value" and attr["dataType"] == "#Float"
         return False
 
     def is_a_float(self):
@@ -251,9 +280,9 @@ class CIMComponentDefinition:
         if simple_float:
             return True
 
-        candidate_array = { 'value': False, 'unit': False, 'multiplier': False }
+        candidate_array = {"value": False, "unit": False, "multiplier": False}
         for attr in self.attribute_list:
-            key = attr['label']
+            key = attr["label"]
             if key in candidate_array:
                 candidate_array[key] = True
             else:
@@ -263,36 +292,45 @@ class CIMComponentDefinition:
                 return False
         return True
 
+
 def get_profile_name(descriptions):
     for list_elem in descriptions:
         # only for CGMES-Standard
         rdfsEntry = RDFSEntry(list_elem)
-        if rdfsEntry.stereotype() == 'Entsoe':
+        if rdfsEntry.stereotype() == "Entsoe":
             return rdfsEntry.about()
+
 
 def get_short_profile_name(descriptions):
     for list_elem in descriptions:
         # only for CGMES-Standard
         rdfsEntry = RDFSEntry(list_elem)
-        if rdfsEntry.label() == 'shortName':
+        if rdfsEntry.label() == "shortName":
             return rdfsEntry.fixed()
+
 
 short_package_name = {}
 package_listed_by_short_name = {}
 
 profiles = {}
 
-def _rdfs_entry_types(rdfs_entry: RDFSEntry, version)->list:
+
+def _rdfs_entry_types(rdfs_entry: RDFSEntry, version) -> list:
     """
     Determine the types of RDFS entry. In some case an RDFS entry can be of more than 1 type.
     """
     entry_types = []
     if rdfs_entry.type() != None:
-        if rdfs_entry.type() == "http://www.w3.org/2000/01/rdf-schema#Class": # NOSONAR
+        if rdfs_entry.type() == "http://www.w3.org/2000/01/rdf-schema#Class":  # NOSONAR
             entry_types.append("class")
-        if rdfs_entry.type() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property": # NOSONAR
+        if (
+            rdfs_entry.type() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"
+        ):  # NOSONAR
             entry_types.append("property")
-        if rdfs_entry.type() != "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory": # NOSONAR
+        if (
+            rdfs_entry.type()
+            != "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"
+        ):  # NOSONAR
             entry_types.append("rest_non_class_category")
 
     if version == "cgmes_v2_4_15":
@@ -300,27 +338,35 @@ def _rdfs_entry_types(rdfs_entry: RDFSEntry, version)->list:
     elif version == "cgmes_v3_0_0":
         entry_types.extend(_entry_types_version_3(rdfs_entry))
     else:
-        raise Exception(f"Got version '{version}', but only 'cgmes_v2_4_15' and 'cgmes_v3_0_0' are supported.")
+        raise Exception(
+            f"Got version '{version}', but only 'cgmes_v2_4_15' and 'cgmes_v3_0_0' are supported."
+        )
 
     return entry_types
+
 
 def _entry_types_version_2(rdfs_entry: RDFSEntry) -> list:
-    entry_types=[]
+    entry_types = []
     if rdfs_entry.stereotype() != None:
-            if rdfs_entry.stereotype() == "Entsoe" and rdfs_entry.about()[-7:] == "Version":
-                entry_types.append("profile_name_v2_4")
-            if (
-                rdfs_entry.stereotype() == "http://iec.ch/TC57/NonStandard/UML#attribute" # NOSONAR
-                and rdfs_entry.label()[0:7] == "baseURI"
-            ):
-                entry_types.append("profile_iri_v2_4")
-            if rdfs_entry.label() == "shortName":
-                entry_types.append("short_profile_name_v2_4")
+        if rdfs_entry.stereotype() == "Entsoe" and rdfs_entry.about()[-7:] == "Version":
+            entry_types.append("profile_name_v2_4")
+        if (
+            rdfs_entry.stereotype()
+            == "http://iec.ch/TC57/NonStandard/UML#attribute"  # NOSONAR
+            and rdfs_entry.label()[0:7] == "baseURI"
+        ):
+            entry_types.append("profile_iri_v2_4")
+        if rdfs_entry.label() == "shortName":
+            entry_types.append("short_profile_name_v2_4")
     return entry_types
 
+
 def _entry_types_version_3(rdfs_entry: RDFSEntry) -> list:
-    entry_types=[]
-    if rdfs_entry.type() == "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory": # NOSONAR
+    entry_types = []
+    if (
+        rdfs_entry.type()
+        == "http://iec.ch/TC57/1999/rdf-schema-extensions-19990926#ClassCategory"
+    ):  # NOSONAR
         entry_types.append("profile_name_v3")
     if rdfs_entry.about() == "Ontology":
         entry_types.append("profile_iri_v3")
@@ -353,6 +399,7 @@ def _add_profile_to_packages(profile_name, short_profile_name, profile_iri):
     else:
         package_listed_by_short_name[short_profile_name].append(profile_iri)
 
+
 def _parse_rdf(input_dic, version):
     classes_map = {}
     profile_name = ""
@@ -361,8 +408,7 @@ def _parse_rdf(input_dic, version):
     instances = []
 
     # Generates list with dictionaries as elements
-    descriptions = input_dic['rdf:RDF']['rdf:Description']
-
+    descriptions = input_dic["rdf:RDF"]["rdf:Description"]
 
     # Iterate over list elements
     for list_elem in descriptions:
@@ -394,15 +440,17 @@ def _parse_rdf(input_dic, version):
     _add_profile_to_packages(profile_name, short_profile_name, profile_iri)
     # Add attributes to corresponding class
     for attribute in attributes:
-        clarse = attribute['domain']
+        clarse = attribute["domain"]
         if clarse and classes_map[clarse]:
             classes_map[clarse].addAttribute(attribute)
         else:
-            logger.info("Class {} for attribute {} not found.".format(clarse, attribute))
+            logger.info(
+                "Class {} for attribute {} not found.".format(clarse, attribute)
+            )
 
     # Add instances to corresponding class
     for instance in instances:
-        clarse = RDFSEntry._get_rid_of_hash(instance['type'])
+        clarse = RDFSEntry._get_rid_of_hash(instance["type"])
         if clarse and clarse in classes_map:
             classes_map[clarse].addInstance(instance)
         else:
@@ -415,7 +463,6 @@ def _parse_rdf(input_dic, version):
 # class name. After the extraction the function write_files is called to write the files with the template engine
 # chevron
 def _write_python_files(elem_dict, langPack, outputPath, version):
-
     float_classes = {}
     enum_classes = {}
 
@@ -430,10 +477,11 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
     langPack.set_enum_classes(enum_classes)
 
     for class_name in elem_dict.keys():
-
         class_details = {
             "attributes": _find_multiple_attributes(elem_dict[class_name].attributes()),
-            "ClassLocation": langPack.get_class_location(class_name, elem_dict, outputPath),
+            "ClassLocation": langPack.get_class_location(
+                class_name, elem_dict, outputPath
+            ),
             "class_name": class_name,
             "class_origin": elem_dict[class_name].origins(),
             "instances": elem_dict[class_name].instances(),
@@ -446,57 +494,68 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
 
         # extract comments
         if elem_dict[class_name].comment:
-            class_details['class_comment'] = elem_dict[class_name].comment
+            class_details["class_comment"] = elem_dict[class_name].comment
 
-        for attribute in class_details['attributes']:
+        for attribute in class_details["attributes"]:
             if "comment" in attribute:
                 attribute["comment"] = attribute["comment"].replace('"', "`")
                 attribute["comment"] = attribute["comment"].replace("'", "`")
 
         _write_files(class_details, outputPath, version)
 
+
 def get_rid_of_hash(name):
-    tokens = name.split('#')
+    tokens = name.split("#")
     if len(tokens) == 1:
         return tokens[0]
     if len(tokens) > 1:
         return tokens[1]
     return name
 
+
 def format_class(_range, _dataType):
-    if _range == '':
+    if _range == "":
         return get_rid_of_hash(_dataType)
     else:
         return get_rid_of_hash(_range)
 
-def _write_files(class_details, outputPath, version):
-    class_details['langPack'].setup(outputPath, package_listed_by_short_name)
 
-    if class_details['sub_class_of'] == None:
+def _write_files(class_details, outputPath, version):
+    class_details["langPack"].setup(outputPath, package_listed_by_short_name)
+
+    if class_details["sub_class_of"] == None:
         # If class has no subClassOf key it is a subclass of the Base class
-        class_details['sub_class_of'] = class_details['langPack'].base['base_class']
-        class_details['class_location'] = class_details['langPack'].base['class_location'](version)
-        class_details['super_init'] = False
+        class_details["sub_class_of"] = class_details["langPack"].base["base_class"]
+        class_details["class_location"] = class_details["langPack"].base[
+            "class_location"
+        ](version)
+        class_details["super_init"] = False
     else:
         # If class is a subclass a super().__init__() is needed
-        class_details['super_init'] = True
+        class_details["super_init"] = True
 
     # The entry dataType for an attribute is only set for basic data types. If the entry is not set here, the attribute
     # is a reference to another class and therefore the entry dataType is generated and set to the multiplicity
-    for i in range(len(class_details['attributes'])):
-        if 'dataType' not in class_details['attributes'][i].keys() and 'multiplicity' in class_details['attributes'][i].keys():
-            class_details['attributes'][i]['dataType'] = class_details['attributes'][i]['multiplicity']
+    for i in range(len(class_details["attributes"])):
+        if (
+            "dataType" not in class_details["attributes"][i].keys()
+            and "multiplicity" in class_details["attributes"][i].keys()
+        ):
+            class_details["attributes"][i]["dataType"] = class_details["attributes"][i][
+                "multiplicity"
+            ]
 
-    for attr in class_details['attributes']:
+    for attr in class_details["attributes"]:
         _range = ""
         _dataType = ""
-        if 'range' in attr:
-            _range = attr['range']
-        if 'dataType' in attr:
-            _dataType = attr['dataType']
-        attr['class_name'] = format_class( _range, _dataType )
+        if "range" in attr:
+            _range = attr["range"]
+        if "dataType" in attr:
+            _dataType = attr["dataType"]
+        attr["class_name"] = format_class(_range, _dataType)
 
-    class_details['langPack'].run_template( outputPath, class_details )
+    class_details["langPack"].run_template(outputPath, class_details)
+
 
 # Find multiple entries for the same attribute
 def _find_multiple_attributes(attributes_array):
@@ -504,7 +563,7 @@ def _find_multiple_attributes(attributes_array):
     for elem in attributes_array:
         found = False
         for i in range(len(merged_attributes)):
-            if elem['label'] == merged_attributes[i]['label']:
+            if elem["label"] == merged_attributes[i]["label"]:
                 found = True
                 break
         if found is False:
@@ -527,11 +586,17 @@ def _merge_profiles(profiles_array):
                     if class_key in profiles_dict[profile_key].keys():
                         # If class already exists in packageDict add attributes to attributes array
                         if len(elem_dict[profile_key][class_key].attributes()) > 0:
-                            attributes_array = elem_dict[profile_key][class_key].attributes()
-                            profiles_dict[profile_key][class_key].addAttributes(attributes_array)
+                            attributes_array = elem_dict[profile_key][
+                                class_key
+                            ].attributes()
+                            profiles_dict[profile_key][class_key].addAttributes(
+                                attributes_array
+                            )
                     # If class is not in packageDict, create entry
                     else:
-                        profiles_dict[profile_key][class_key] = elem_dict[profile_key][class_key]
+                        profiles_dict[profile_key][class_key] = elem_dict[profile_key][
+                            class_key
+                        ]
             # If package name not in packageDict create entry
             else:
                 profiles_dict[profile_key] = elem_dict[profile_key]
@@ -542,7 +607,7 @@ def _merge_profiles(profiles_array):
 # The origin of the class definitions and the origin of the attributes of a class are tracked and used to generate
 # the possibleProfileList used for the serialization.
 def _merge_classes(profiles_dict):
-    class_dict = { }
+    class_dict = {}
 
     # Iterate over profiles
     for package_key in profiles_dict.keys():
@@ -559,48 +624,51 @@ def _merge_classes(profiles_dict):
             if class_key not in class_dict:
                 # store class and class origin
                 class_dict[class_key] = profiles_dict[package_key][class_key]
-                class_dict[class_key].addOrigin({'origin': short_name})
+                class_dict[class_key].addOrigin({"origin": short_name})
                 for attr in class_dict[class_key].attributes():
                     # store origin of the attributes
-                    attr['attr_origin'] = [{'origin': short_name}]
+                    attr["attr_origin"] = [{"origin": short_name}]
             else:
                 # some inheritance information is stored only in one of the packages. Therefore it has to be checked
                 # if the subClassOf attribute is set. See for example TopologicalNode definitions in SV and TP.
                 if not class_dict[class_key].superClass():
                     if profiles_dict[package_key][class_key].superClass():
-                        class_dict[class_key].super = profiles_dict[package_key][class_key].superClass()
+                        class_dict[class_key].super = profiles_dict[package_key][
+                            class_key
+                        ].superClass()
 
                 # check if profile is already stored in class origin list
                 multiple_origin = False
                 for origin in class_dict[class_key].origins():
-                    if short_name == origin['origin']:
+                    if short_name == origin["origin"]:
                         # origin already stored
                         multiple_origin = True
                         break
                 if not multiple_origin:
-                    class_dict[class_key].addOrigin({'origin': short_name})
+                    class_dict[class_key].addOrigin({"origin": short_name})
 
                 for attr in profiles_dict[package_key][class_key].attributes():
                     # check if attribute is already in attributes list
                     multiple_attr = False
                     for attr_set in class_dict[class_key].attributes():
-                        if attr['label'] == attr_set['label']:
+                        if attr["label"] == attr_set["label"]:
                             # attribute already in attributes list, check if origin is new
                             multiple_attr = True
-                            for origin in attr_set['attr_origin']:
+                            for origin in attr_set["attr_origin"]:
                                 multiple_attr_origin = False
-                                if origin['origin'] == short_name:
+                                if origin["origin"] == short_name:
                                     multiple_attr_origin = True
                                     break
                             if not multiple_attr_origin:
                                 # new origin
-                                attr_set['attr_origin'].append({'origin': short_name})
+                                attr_set["attr_origin"].append({"origin": short_name})
                             break
                     if not multiple_attr:
                         # new attribute
-                        attr['attr_origin'] = [{'origin': short_name}]
+                        attr["attr_origin"] = [{"origin": short_name}]
                         class_dict[class_key].addAttribute(attr)
     return class_dict
+
 
 def recursivelyAddSubClasses(class_dict, class_name):
     newSubClasses = []
@@ -611,9 +679,13 @@ def recursivelyAddSubClasses(class_dict, class_name):
         newSubClasses = newSubClasses + newNewSubClasses
     return newSubClasses
 
+
 def addSubClassesOfSubClasses(class_dict):
     for className in class_dict:
-        class_dict[className].setSubClasses(recursivelyAddSubClasses(class_dict, className))
+        class_dict[className].setSubClasses(
+            recursivelyAddSubClasses(class_dict, className)
+        )
+
 
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology
@@ -639,13 +711,15 @@ def cim_generate(directory, outputPath, version, langPack):
     # iterate over files in the directory and check if they are RDF files
     for file in os.listdir(directory):
         if file.endswith(".rdf"):
-            logger.info('Start of parsing file \"%s\"', file)
+            logger.info('Start of parsing file "%s"', file)
 
             file_path = os.path.join(directory, file)
             xmlstring = open(file_path, encoding="utf8").read()
 
             # parse RDF files and create a dictionary from the RDF file
-            parse_result = xmltodict.parse(xmlstring, attr_prefix="$", cdata_key="_", dict_constructor=dict)
+            parse_result = xmltodict.parse(
+                xmlstring, attr_prefix="$", cdata_key="_", dict_constructor=dict
+            )
             parsed = _parse_rdf(parse_result, version)
             profiles_array.append(parsed)
 
@@ -657,10 +731,10 @@ def cim_generate(directory, outputPath, version, langPack):
 
     # work out the subclasses for each class by noting the reverse relationship
     for className in class_dict_with_origins:
-        superClassName = class_dict_with_origins[className].superClass();
+        superClassName = class_dict_with_origins[className].superClass()
         if superClassName != None:
-            if superClassName in  class_dict_with_origins:
-                superClass = class_dict_with_origins[superClassName];
+            if superClassName in class_dict_with_origins:
+                superClass = class_dict_with_origins[superClassName]
                 superClass.addSubClass(className)
             else:
                 print("No match for superClass in dict: :", superClassName)
@@ -671,6 +745,4 @@ def cim_generate(directory, outputPath, version, langPack):
     # get information for writing python files and write python files
     _write_python_files(class_dict_with_origins, langPack, outputPath, version)
 
-    logger.info('Elapsed Time: {}s\n\n'.format(time() - t0))
-
-
+    logger.info("Elapsed Time: {}s\n\n".format(time() - t0))
