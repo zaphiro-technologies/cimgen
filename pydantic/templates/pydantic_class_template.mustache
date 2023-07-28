@@ -1,0 +1,29 @@
+from __future__ import annotations
+from .{{sub_class_of}} import {{sub_class_of}}
+from .Base import CgmesProfileEnum
+import uuid
+from pydantic import (
+    ConfigDict,
+	Field
+)
+from typing import Optional, Iterator, List
+{{#setImports}}{{attributes}}{{/setImports}}
+
+class {{class_name}}({{sub_class_of}}):
+    '''
+    {{{class_comment}}}
+
+    {{#attributes}}
+	:{{label}}: {{{comment}}}
+    {{/attributes}}
+    '''
+
+    possibleProfileList: dict = Field(default={'class': [{{#class_origin}}CgmesProfileEnum.{{origin}}, {{/class_origin}}],
+						{{#attributes}}'{{label}}': [{{#attr_origin}}CgmesProfileEnum.{{origin}}, {{/attr_origin}}],
+						{{/attributes}} }, hidden=True)
+
+    {{#attributes}}
+    {{label}}: {{#setDataType}}{{.}}{{/setDataType}}{{#setDefault}}{{.}}{{/setDefault}}
+    {{/attributes}}
+
+    model_config = ConfigDict(from_attributes=True)
