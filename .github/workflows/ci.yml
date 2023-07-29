@@ -1,0 +1,68 @@
+name: CI
+
+on: 
+  # Run the jobs on either push or a pull_request, but not both.
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+concurrency:
+  group: ${{ github.ref_name }}-ci
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang:
+          - python
+          - cpp
+          - java
+          - javascript
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install poetry
+      run: pipx install poetry
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'poetry'
+    - name: Install Prerequisites
+      run: poetry install --no-root
+    - name: Configure Build & Test
+      env:
+        LANG: ${{ matrix.lang }}
+      run: |
+        poetry run python build.py --outdir=$(pwd)/CGMES_2.4.15_27JAN2020 --schemadir=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020 --langdir=$LANG
+        ls -l $(pwd)/CGMES_2.4.15_27JAN2020
+  lint:
+    # Check if the PR is not from a fork
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+      - uses: rickstaa/action-black@v1
+        id: action_black
+        with:
+          black_args: "."
+      - name: Commit Black changes
+        if: steps.action_black.outputs.is_formatted == 'true'
+        run: |
+          git config --global user.name 'Bot'
+          git config --global user.email 'bot@zaphiro.ch'
+          git commit --signoff -am "Automated Black fmt fixes"
+          git push

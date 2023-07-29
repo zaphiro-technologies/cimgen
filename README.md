@@ -1,6 +1,7 @@
 # <img src="documentation/images/cimgen_logo.png" alt="CIMgen" width=120 />
 
-Python tool for code generation from CIM data model for several programming languages
+Python tool for code generation from CIM data model for several programming
+languages
 
 ## Concept overview
 
@@ -19,9 +20,11 @@ poetry install --no-root # install dependencies
 poetry run cmake -P CMakeLists.txt
 ```
 
-This will build version CGMES_2.4.15_27JAN2020 in the subfolder with the same name.
+This will build version CGMES_2.4.15_27JAN2020 in the subfolder with the same
+name.
 
-If you wish to build an alternative version, you can see available options in the subfolder called cgmes_schema.
+If you wish to build an alternative version, you can see available options in
+the subfolder called cgmes_schema.
 
 They can be built using a cmake variable:
 
@@ -51,9 +54,8 @@ export SCHEMA_DIR=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020
 ```
 
 `OUTPUT_DIR` can be set to whichever absolute path you wish to create the files
-in.
-If you wish to build an alternative version, you can see available options in
-the subfolder called cgmes_schema
+in. If you wish to build an alternative version, you can see available options
+in the subfolder called cgmes_schema
 
 #### Generating Python files in a Docker container
 
@@ -71,5 +73,5 @@ your publications:
 
 Dinkelbach, J., Razik, L., Mirz, M., Benigni, A., Monti, A.: Template-based
 generation of programming language specific code for smart grid modelling
-compliant with CIM and CGMES.
-J. Eng. 2023, 1–13 (2022). [https://doi.org/10.1049/tje2.12208](https://doi.org/10.1049/tje2.12208)
+compliant with CIM and CGMES. J. Eng. 2023, 1–13 (2022).
+[https://doi.org/10.1049/tje2.12208](https://doi.org/10.1049/tje2.12208)

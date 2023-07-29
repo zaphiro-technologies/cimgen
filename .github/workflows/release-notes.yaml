@@ -1,0 +1,15 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+    # Only following types are handled by the action, but one can default to all as well
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+    branches:
+      - main
+jobs:
+  release-notes:
+    uses: zaphiro-technologies/github-workflows/.github/workflows/release-notes.yaml@main
+    secrets: inherit
