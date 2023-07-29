@@ -4,6 +4,7 @@ from pydantic import (
 )
 from typing import Iterator
 
+
 def is_recursion_validation_error(exc: ValidationError) -> bool:
     errors = exc.errors()
     return len(errors) == 1 and errors[0]["type"] == "recursion_loop"

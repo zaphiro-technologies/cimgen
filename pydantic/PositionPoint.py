@@ -1,12 +1,7 @@
 from __future__ import annotations
 from .Base import Base, CgmesProfileEnum
 
-from pydantic import (
-    ConfigDict,
-    computed_field,
-    field_validator,
-    Field
-)
+from pydantic import ConfigDict, computed_field, field_validator, Field
 
 from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKBElement
@@ -16,24 +11,41 @@ from shapely.geometry import Point
 from geoalchemy2.shape import to_shape
 from .Location import Location
 
+
 class PositionPoint(Base):
-    '''
+    """
     Set of spatial coordinates that determine a point, defined in the coordinate system specified in 'Location.CoordinateSystem'. Use a single position point instance to desribe a point-oriented location. Use a sequence of position points to describe a line-oriented object (physical location of non-point oriented objects like cables or lines), or area of an object (like a substation or a geographical zone - in this case, have first and last position point with the same values).
 
-	:Location: Location described by this position point.
-	:sequenceNumber: Zero-relative sequence number of this point within a series of points.
-	:xPosition: X axis position.
-	:yPosition: Y axis position.
-	:zPosition: (if applicable) Z axis position.
-    '''
+        :Location: Location described by this position point.
+        :sequenceNumber: Zero-relative sequence number of this point within a series of points.
+        :xPosition: X axis position.
+        :yPosition: Y axis position.
+        :zPosition: (if applicable) Z axis position.
+    """
 
-    possibleProfileList: dict = Field(default={'class': [CgmesProfileEnum.GL, ],
-						'Location': [CgmesProfileEnum.GL, ],
-						'sequenceNumber': [CgmesProfileEnum.GL, ],
-						'xPosition': [CgmesProfileEnum.GL, ],
-						'yPosition': [CgmesProfileEnum.GL, ],
-						'zPosition': [CgmesProfileEnum.GL, ],
-						 }, hidden=True)
+    possibleProfileList: dict = Field(
+        default={
+            "class": [
+                CgmesProfileEnum.GL,
+            ],
+            "Location": [
+                CgmesProfileEnum.GL,
+            ],
+            "sequenceNumber": [
+                CgmesProfileEnum.GL,
+            ],
+            "xPosition": [
+                CgmesProfileEnum.GL,
+            ],
+            "yPosition": [
+                CgmesProfileEnum.GL,
+            ],
+            "zPosition": [
+                CgmesProfileEnum.GL,
+            ],
+        },
+        hidden=True,
+    )
 
     Location: List[Location]
     sequenceNumber: Optional[int]
