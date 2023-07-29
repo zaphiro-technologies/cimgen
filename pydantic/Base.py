@@ -13,16 +13,17 @@ class CgmesProfileEnum(IntEnum):
     TP_DB = 7
     ED_BD = 8
 
+
 class Base(BaseModel):
     """
     Base Class for CIM
     """
-    
+
     class Config:
         @staticmethod
         def schema_extra(schema: dict, _):
             props = {}
-            for k, v in schema.get('properties', {}).items():
+            for k, v in schema.get("properties", {}).items():
                 if not v.get("hidden", False):
                     props[k] = v
             schema["properties"] = props
