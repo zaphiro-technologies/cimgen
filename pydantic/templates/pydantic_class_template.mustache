@@ -4,9 +4,11 @@ from .Base import CgmesProfileEnum
 import uuid
 from pydantic import (
     ConfigDict,
-	Field
+	Field,
+    field_validator
 )
 from typing import Optional, Iterator, List
+from .util import cyclic_references_validator
 {{#setImports}}{{attributes}}{{/setImports}}
 
 class {{class_name}}({{sub_class_of}}):
@@ -24,6 +26,10 @@ class {{class_name}}({{sub_class_of}}):
 
     {{#attributes}}
     {{label}}: {{#setDataType}}{{.}}{{/setDataType}}{{#setDefault}}{{.}}{{/setDefault}}
+    {{/attributes}}
+
+    {{#attributes}}
+    {{#setValidator}}{{.}}{{/setValidator}}
     {{/attributes}}
 
     model_config = ConfigDict(from_attributes=True)
