@@ -10,8 +10,8 @@ class CgmesProfileEnum(IntEnum):
     DY = 4
     GL = 5
     DL = 5
-    TP_DB = 7
-    ED_BD = 8
+    TP_BD = 7
+    EQ_BD = 8
 
 
 class Base(BaseModel):
