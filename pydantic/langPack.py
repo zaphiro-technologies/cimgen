@@ -94,6 +94,12 @@ def _set_default(text, render):
     return ""
 
 
+def _is_primitive(datatype):
+    if datatype in ['str','int','bool','float']:
+        return True
+    else:
+        return False
+
 def _compute_data_type(attribute):
     if "label" in attribute and attribute["label"] == "mRID":
         return "uuid.UUID"
@@ -141,6 +147,21 @@ def _set_data_type(text, render):
         return datatype
 
 
+# called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
+def _set_validator(text, render):
+    attribute = eval(render(text))
+
+    datatype = _compute_data_type(attribute)
+
+    if "multiplicity" in attribute and not _is_primitive(datatype):
+        multiplicity = attribute["multiplicity"]
+        if (multiplicity in ["M:0..n"] or "M:0.." in multiplicity) or (multiplicity in ["M:1", "M:1..n"] or "M:1.." in multiplicity):
+            return 'val_' + datatype + '_wrap = field_validator("'+ datatype + '", mode="wrap")(cyclic_references_validator)'
+        else:
+            return ""
+    else:
+        return ""
+
 def set_enum_classes(new_enum_classes):
     return
 
@@ -170,6 +191,7 @@ def run_template(version_path, class_details):
                 class_details["setDataType"] = _set_data_type
                 class_details["setImports"] = _set_imports
                 class_details["setInstances"] = _set_instances
+                class_details["setValidator"] = _set_validator
                 with open(template_path) as f:
                     args = {
                         "data": class_details,
