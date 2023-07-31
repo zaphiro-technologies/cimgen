@@ -95,7 +95,7 @@ def _set_default(text, render):
 
 
 def _is_primitive(datatype):
-    if datatype in ["str", "int", "bool", "float"]:
+    if datatype in ["str", "int", "bool", "float", "date", "time", "datetime"]:
         return True
     else:
         return False
@@ -115,9 +115,13 @@ def _compute_data_type(attribute):
             if datatype == "String":
                 return "str"
             if datatype == "DateTime":
-                return "str"
+                return "datetime"
             if datatype == "Date":
-                return "str"
+                return "date"
+            if datatype == "Time":
+                return "time"
+            if datatype == "Float":
+                return "float"
             if datatype == "String":
                 return "str"
             else:
