@@ -160,8 +160,12 @@ def _set_validator(text, render):
 
     if "multiplicity" in attribute and not _is_primitive(datatype):
         multiplicity = attribute["multiplicity"]
-        if (multiplicity in ["M:0..n"] or ("M:0.." in multiplicity and "M:0..1" not in multiplicity)) or (
-            multiplicity in ["M:1", "M:1..n"] or ("M:1.." in multiplicity and "M:1..1" not in multiplicity)
+        if (
+            multiplicity in ["M:0..n"]
+            or ("M:0.." in multiplicity and "M:0..1" not in multiplicity)
+        ) or (
+            multiplicity in ["M:1", "M:1..n"]
+            or ("M:1.." in multiplicity and "M:1..1" not in multiplicity)
         ):
             return (
                 "val_"
