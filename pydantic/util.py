@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from pydantic import (
-ValidationError,
+    ValidationError,
     ValidationInfo,
     ValidatorFunctionWrapHandler,
 )
@@ -19,6 +19,7 @@ def suppress_recursion_validation_error() -> Iterator[None]:
     except ValidationError as exc:
         if not is_recursion_validation_error(exc):
             raise exc
+
 
 def cyclic_references_validator(
     v: List, handler: ValidatorFunctionWrapHandler, info: ValidationInfo
