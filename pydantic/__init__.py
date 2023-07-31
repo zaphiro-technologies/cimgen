@@ -1,1 +1,1 @@
-import pypdantic.langPack
+import pydantic.langPack
