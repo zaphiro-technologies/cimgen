@@ -8,7 +8,9 @@ COPY cpp/               /CIMgen/cpp/
 COPY java/              /CIMgen/java/
 COPY javascript/        /CIMgen/javascript/
 COPY python/            /CIMgen/python/
+COPY pydantic/            /CIMgen/pydantic/
 COPY CIMgen.py build.py /CIMgen/
+COPY cgmes_schema/ /cgmes_schema
 WORKDIR /CIMgen
 ENTRYPOINT [ "/usr/bin/python3", "build.py", "--outdir=/cgmes_output", "--schemadir=/cgmes_schema" ]
 CMD [ "--langdir=cpp" ]
