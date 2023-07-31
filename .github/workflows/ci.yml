@@ -28,6 +28,7 @@ jobs:
           - cpp
           - java
           - javascript
+          - pydantic
 
     steps:
     - uses: actions/checkout@v3
