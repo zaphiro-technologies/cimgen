@@ -50,15 +50,20 @@ partials = {}
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_instances(text, render):
-    instance = eval(render(text))
+    instance = None
+    try:
+        instance = eval(render(text))
+    except:
+        rendered = render(text)
+        rendered = rendered.replace('&quot;','"')
+        instance = eval(rendered)
     if "label" in instance:
         value = instance["label"] + ' = "' + instance["label"] + '"'
         if "comment" in instance:
             value += " #" + instance["comment"]
         return value
     else:
-        return ""
-
+            return ""
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
