@@ -1,16 +1,3 @@
-from __future__ import annotations
-from .{{sub_class_of}} import {{sub_class_of}}
-from .Base import CgmesProfileEnum
-import uuid
-from pydantic import (
-    ConfigDict,
-	Field,
-    field_validator
-)
-from datetime import date, datetime, time
-from typing import Optional, Iterator, List
-from .util import cyclic_references_validator
-{{#setImports}}{{attributes}}{{/setImports}}
 
 class {{class_name}}({{sub_class_of}}):
     '''
@@ -23,10 +10,10 @@ class {{class_name}}({{sub_class_of}}):
 
     possibleProfileList: dict = Field(default={'class': [{{#class_origin}}CgmesProfileEnum.{{origin}}, {{/class_origin}}],
 						{{#attributes}}'{{label}}': [{{#attr_origin}}CgmesProfileEnum.{{origin}}, {{/attr_origin}}],
-						{{/attributes}} }, hidden=True)
+						{{/attributes}} })
 
     {{#attributes}}
-    {{label}}: {{#setDataType}}{{.}}{{/setDataType}}{{#setDefault}}{{.}}{{/setDefault}}
+    {{#setAttribute}}{{.}}{{/setAttribute}}
     {{/attributes}}
     
     {{#attributes}}
