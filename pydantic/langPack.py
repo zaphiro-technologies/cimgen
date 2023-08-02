@@ -29,7 +29,8 @@ base = {"base_class": "Base", "class_location": location}
 template_files = [{"filename": "pydantic_class_template.mustache", "ext": ".py"}]
 enum_template_files = [{"filename": "pydantic_enum_template.mustache", "ext": ".py"}]
 
-required_profiles = ['EQ']
+required_profiles = ["EQ"]
+
 
 def get_class_location(class_name, class_map, version):
     # Check if the current class has a parent class
@@ -69,10 +70,16 @@ def _set_instances(text, render):
 def _set_attribute(text, render):
     attribute = eval(render(text))
 
-    if is_required_profile(attribute['attr_origin']):
-        return attribute['label'] + ":" + _set_data_type(attribute) + _set_default(attribute)
+    if is_required_profile(attribute["attr_origin"]):
+        return (
+            attribute["label"]
+            + ":"
+            + _set_data_type(attribute)
+            + _set_default(attribute)
+        )
     else:
         return ""
+
 
 def _set_default(attribute):
     if "range" in attribute and "isFixed" in attribute:
@@ -116,9 +123,9 @@ def _compute_data_type(attribute):
             if datatype == "DateTime":
                 return "datetime"
             if datatype == "MonthDay":
-                return "str" #TO BE FIXED
+                return "str"  # TO BE FIXED
             if datatype == "Date":
-                return "str" #TO BE FIXED
+                return "str"  # TO BE FIXED
             if datatype == "Time":
                 return "time"
             if datatype == "Float":
@@ -128,11 +135,11 @@ def _compute_data_type(attribute):
             else:
                 return "float"
     if "range" in attribute:
-        #return "'"+attribute["range"].split("#")[1]+"'"
+        # return "'"+attribute["range"].split("#")[1]+"'"
         return attribute["range"].split("#")[1]
 
-def _set_data_type(attribute):
 
+def _set_data_type(attribute):
     datatype = _compute_data_type(attribute)
 
     if "multiplicity" in attribute:
@@ -157,12 +164,12 @@ def _set_validator(text, render):
 
     datatype = _compute_data_type(attribute)
 
-    if not _is_primitive(datatype) and is_required_profile(attribute['attr_origin']):
+    if not _is_primitive(datatype) and is_required_profile(attribute["attr_origin"]):
         return (
             "val_"
-            + attribute['label']
+            + attribute["label"]
             + '_wrap = field_validator("'
-            + attribute['label']
+            + attribute["label"]
             + '", mode="wrap")(cyclic_references_validator)'
         )
     else:
@@ -179,19 +186,39 @@ def set_float_classes(new_float_classes):
 
 def has_unit_attribute(attributes):
     for attr in attributes:
-        if attr['label'] == 'unit':
+        if attr["label"] == "unit":
             return True
     return False
 
 
 def is_required_profile(class_origin):
     for origin in class_origin:
-        if origin['origin'] in required_profiles:
+        if origin["origin"] in required_profiles:
             return True
     return False
 
+
 def run_template(version_path, class_details):
-    if (class_details["class_name"] in ["Float", "Integer", "String", "Boolean", "Date", "DateTime", "MonthDay", "PositionPoint", "Decimal"]) or class_details["is_a_float"] == True or "Version" in class_details["class_name"] or has_unit_attribute(class_details["attributes"]) or not is_required_profile(class_details['class_origin']):
+    if (
+        (
+            class_details["class_name"]
+            in [
+                "Float",
+                "Integer",
+                "String",
+                "Boolean",
+                "Date",
+                "DateTime",
+                "MonthDay",
+                "PositionPoint",
+                "Decimal",
+            ]
+        )
+        or class_details["is_a_float"] == True
+        or "Version" in class_details["class_name"]
+        or has_unit_attribute(class_details["attributes"])
+        or not is_required_profile(class_details["class_origin"])
+    ):
         return
     elif class_details["has_instances"] == True:
         run_template_enum(version_path, class_details, enum_template_files)
@@ -201,15 +228,13 @@ def run_template(version_path, class_details):
 
 def run_template_enum(version_path, class_details, templates):
     for template_info in templates:
-        class_file = os.path.join(
-                version_path, "enum" + template_info["ext"]
-        )
+        class_file = os.path.join(version_path, "enum" + template_info["ext"])
         if not os.path.exists(class_file):
             with open(class_file, "w") as file:
                 header_file_path = os.path.join(
                     os.getcwd(), "pydantic", "enum_header.py"
                 )
-                header_file = open(header_file_path, 'r')
+                header_file = open(header_file_path, "r")
                 file.write(header_file.read())
         with open(class_file, "a") as file:
             template_path = os.path.join(
@@ -228,15 +253,13 @@ def run_template_enum(version_path, class_details, templates):
 
 def run_template_schema(version_path, class_details, templates):
     for template_info in templates:
-        class_file = os.path.join(
-            version_path, "schema" + template_info["ext"]
-        )
+        class_file = os.path.join(version_path, "schema" + template_info["ext"])
         if not os.path.exists(class_file):
             with open(class_file, "w") as file:
                 schema_file_path = os.path.join(
                     os.getcwd(), "pydantic", "schema_header.py"
                 )
-                schema_file = open(schema_file_path, 'r')
+                schema_file = open(schema_file_path, "r")
                 file.write(schema_file.read())
         with open(class_file, "a") as file:
             template_path = os.path.join(

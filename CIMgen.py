@@ -682,6 +682,7 @@ def addSubClassesOfSubClasses(class_dict):
             recursivelyAddSubClasses(class_dict, className)
         )
 
+
 def addSubClassesOfSubClassesClean(class_dict, source):
     temp = {}
     for className in class_dict:
@@ -690,6 +691,7 @@ def addSubClassesOfSubClassesClean(class_dict, source):
                 temp[name] = source[name]
                 addSubClassesOfSubClassesClean(temp, source)
     class_dict.update(temp)
+
 
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology
@@ -750,12 +752,18 @@ def cim_generate(directory, outputPath, version, langPack):
 
     for className in class_dict_with_origins:
         superClassName = class_dict_with_origins[className].superClass()
-        if superClassName == None and class_dict_with_origins[className].has_instances():
+        if (
+            superClassName == None
+            and class_dict_with_origins[className].has_instances()
+        ):
             clean_class_dict[className] = class_dict_with_origins[className]
-    
+
     for className in class_dict_with_origins:
         superClassName = class_dict_with_origins[className].superClass()
-        if superClassName == None and not class_dict_with_origins[className].has_instances():
+        if (
+            superClassName == None
+            and not class_dict_with_origins[className].has_instances()
+        ):
             clean_class_dict[className] = class_dict_with_origins[className]
 
     addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
