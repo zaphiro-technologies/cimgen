@@ -4,11 +4,12 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
-#    computed_field
+    #    computed_field
 )
-#from geoalchemy2.shape import to_shape
-#from geoalchemy2.elements import WKBElement
-#from shapely.geometry import Point
+
+# from geoalchemy2.shape import to_shape
+# from geoalchemy2.elements import WKBElement
+# from shapely.geometry import Point
 from datetime import date, datetime, time
 from typing import Optional, Iterator, List
 from .Base import Base

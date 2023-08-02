@@ -11,4 +11,3 @@ class CgmesProfileEnum(IntEnum):
     DL = 5
     TP_BD = 7
     EQ_BD = 8
-
