@@ -72,7 +72,7 @@ def _set_attribute(text, render):
     if is_required_profile(attribute["attr_origin"]):
         return (
             attribute["label"]
-            + ":"
+            + ": "
             + _set_data_type(attribute)
             + _set_default(attribute)
         )
@@ -138,18 +138,24 @@ def _compute_data_type(attribute):
         return attribute["range"].split("#")[1]
 
 
+def _ends_with_s(attribute_name):
+    return attribute_name.endswith("s")
+
 def _set_data_type(attribute):
     datatype = _compute_data_type(attribute)
+    multiplicity_by_name = _ends_with_s(attribute["label"])
 
     if "multiplicity" in attribute:
         multiplicity = attribute["multiplicity"]
-        if multiplicity in ["M:1", "M:1..1", ""]:
+        if multiplicity in ["M:1", "M:1..1", ""] and not multiplicity_by_name:
             return datatype
         if multiplicity in ["M:0..1"]:
             return "Optional[" + datatype + "]"
         elif multiplicity in ["M:0..n"] or "M:0.." in multiplicity:
             return "Optional[List[" + datatype + "]]"
         elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
+            return "List[" + datatype + "]"
+        elif multiplicity_by_name:
             return "List[" + datatype + "]"
         else:
             return "List[" + datatype + "]"
