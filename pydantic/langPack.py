@@ -29,8 +29,7 @@ base = {"base_class": "Base", "class_location": location}
 template_files = [{"filename": "pydantic_class_template.mustache", "ext": ".py"}]
 enum_template_files = [{"filename": "pydantic_enum_template.mustache", "ext": ".py"}]
 
-required_profiles = ["EQ"]
-
+required_profiles = ['EQ', 'GL']
 
 def get_class_location(class_name, class_map, version):
     # Check if the current class has a parent class

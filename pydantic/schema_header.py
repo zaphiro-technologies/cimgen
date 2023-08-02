@@ -4,21 +4,20 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
-    #    computed_field
+    computed_field
 )
-
-# from geoalchemy2.shape import to_shape
-# from geoalchemy2.elements import WKBElement
-# from shapely.geometry import Point
+from geoalchemy2.shape import to_shape
+from geoalchemy2.elements import WKBElement
+from shapely.geometry import Point
 from datetime import date, datetime, time
 from typing import Optional, Iterator, List
 from .Base import Base
 from .util import cyclic_references_validator
 from .enum import *
 
-"""
-class PositionPoint(Base):
 
+class PositionPoint(Base):
+    """
     Set of spatial coordinates that determine a point, defined in the coordinate system specified in 'Location.CoordinateSystem'. Use a single position point instance to desribe a point-oriented location. Use a sequence of position points to describe a line-oriented object (physical location of non-point oriented objects like cables or lines), or area of an object (like a substation or a geographical zone - in this case, have first and last position point with the same values).
 
         :Location: Location described by this position point.
@@ -26,7 +25,7 @@ class PositionPoint(Base):
         :xPosition: X axis position.
         :yPosition: Y axis position.
         :zPosition: (if applicable) Z axis position.
-
+    """
 
     possibleProfileList: dict = Field(
         default={
@@ -88,4 +87,3 @@ class PositionPoint(Base):
             return Point(point)
         else:
             raise ValueError("must be a Point or a WKBElement")
-"""
