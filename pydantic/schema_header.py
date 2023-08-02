@@ -47,7 +47,9 @@ class PositionPoint(Base):
 
     Location: "Location"
     sequenceNumber: Optional[int]
-    point: Point = Field(repr=False)  # we introduce this field compared to CIM definition because we want to store a proper geometry "point" in the database
+    point: Point = Field(
+        repr=False
+    )  # we introduce this field compared to CIM definition because we want to store a proper geometry "point" in the database
 
     model_config = ConfigDict(from_attributes=True)
 
