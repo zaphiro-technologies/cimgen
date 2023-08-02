@@ -150,7 +150,9 @@ def _set_data_type(attribute):
 
     if "multiplicity" in attribute:
         multiplicity = attribute["multiplicity"]
-        if multiplicity in ["M:1", "M:1..1", ""] and not multiplicity_by_name:
+        if multiplicity in ["M:1..1"]:
+            return datatype
+        if multiplicity in ["M:1"] and not multiplicity_by_name:
             return datatype
         if multiplicity in ["M:0..1"]:
             return "Optional[" + datatype + "]"
@@ -158,10 +160,12 @@ def _set_data_type(attribute):
             return "Optional[List[" + datatype + "]]"
         elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
             return "List[" + datatype + "]"
-        elif multiplicity_by_name:
+        elif multiplicity in ["M:1"] and multiplicity_by_name:
             # Most probably there is a bug in the RDF that states multiplicity
             # M:1 but should be M:1..N
             return "List[" + datatype + "]"
+        elif multiplicity in [""]:
+            return datatype
         else:
             return "List[" + datatype + "]"
     else:
