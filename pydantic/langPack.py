@@ -29,7 +29,8 @@ base = {"base_class": "Base", "class_location": location}
 template_files = [{"filename": "pydantic_class_template.mustache", "ext": ".py"}]
 enum_template_files = [{"filename": "pydantic_enum_template.mustache", "ext": ".py"}]
 
-required_profiles = ['EQ', 'GL']
+required_profiles = ["EQ", "GL"]
+
 
 def get_class_location(class_name, class_map, version):
     # Check if the current class has a parent class
@@ -55,7 +56,7 @@ def _set_instances(text, render):
         instance = eval(render(text))
     except:
         rendered = render(text)
-        rendered = rendered.replace('&quot;','"')
+        rendered = rendered.replace("&quot;", '"')
         instance = eval(rendered)
     if "label" in instance:
         value = instance["label"] + ' = "' + instance["label"] + '"'
@@ -63,7 +64,8 @@ def _set_instances(text, render):
             value += " #" + instance["comment"]
         return value
     else:
-            return ""
+        return ""
+
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
@@ -140,6 +142,7 @@ def _compute_data_type(attribute):
 
 def _ends_with_s(attribute_name):
     return attribute_name.endswith("s")
+
 
 def _set_data_type(attribute):
     datatype = _compute_data_type(attribute)
@@ -292,10 +295,8 @@ def _create_init(path):
 
 # creates the Base class file, all classes inherit from this class
 def _copy_files(path):
-    shutil.copy(os.path.join(
-                os.getcwd(), "pydantic/Base.py"), path + "/Base.py")
-    shutil.copy(os.path.join(
-                os.getcwd(), "pydantic/util.py"), path + "/util.py")
+    shutil.copy(os.path.join(os.getcwd(), "pydantic/Base.py"), path + "/Base.py")
+    shutil.copy(os.path.join(os.getcwd(), "pydantic/util.py"), path + "/util.py")
 
 
 def resolve_headers(path):

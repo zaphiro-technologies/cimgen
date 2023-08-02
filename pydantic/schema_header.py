@@ -1,11 +1,6 @@
 from __future__ import annotations
 import uuid
-from pydantic import (
-    ConfigDict,
-    Field,
-    field_validator,
-    computed_field
-)
+from pydantic import ConfigDict, Field, field_validator, computed_field
 from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKBElement
 from shapely.geometry import Point
@@ -50,9 +45,9 @@ class PositionPoint(Base):
         }
     )
 
-    Location: 'Location'
+    Location: "Location"
     sequenceNumber: Optional[int]
-    point: Point #= Field(repr=False)  # we introduce this field compared to CIM definition because we want to store a proper geometry "point" in the database
+    point: Point  # = Field(repr=False)  # we introduce this field compared to CIM definition because we want to store a proper geometry "point" in the database
 
     model_config = ConfigDict(from_attributes=True)
 
