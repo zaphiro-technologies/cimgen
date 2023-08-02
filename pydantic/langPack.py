@@ -262,8 +262,10 @@ def _create_init(path):
 
 # creates the Base class file, all classes inherit from this class
 def _copy_files(path):
-    shutil.copy("./pydantic/Base.py", path + "/Base.py")
-    shutil.copy("./pydantic/util.py", path + "/util.py")
+    shutil.copy(os.path.join(
+                os.getcwd(), "pydantic/Base.py"), path + "/Base.py")
+    shutil.copy(os.path.join(
+                os.getcwd(), "pydantic/util.py"), path + "/util.py")
 
 
 def resolve_headers(path):
