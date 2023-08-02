@@ -1,24 +1,12 @@
 from pydantic import BaseModel
-from enum import IntEnum
-
-
-class CgmesProfileEnum(IntEnum):
-    EQ = 0
-    SSH = 1
-    TP = 2
-    SV = 3
-    DY = 4
-    GL = 5
-    DL = 5
-    TP_BD = 7
-    EQ_BD = 8
-
 
 class Base(BaseModel):
     """
     Base Class for CIM
     """
 
+    """
+    not valid for pydantic 2.0
     class Config:
         @staticmethod
         def schema_extra(schema: dict, _):
@@ -26,7 +14,7 @@ class Base(BaseModel):
             for k, v in schema.get("properties", {}).items():
                 if not v.get("hidden", False):
                     props[k] = v
-            schema["properties"] = props
+            schema["properties"] = props """
 
     def printxml(self, dict={}):
         return dict

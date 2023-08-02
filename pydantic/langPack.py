@@ -29,6 +29,7 @@ base = {"base_class": "Base", "class_location": location}
 template_files = [{"filename": "pydantic_class_template.mustache", "ext": ".py"}]
 enum_template_files = [{"filename": "pydantic_enum_template.mustache", "ext": ".py"}]
 
+required_profiles = ['EQ']
 
 def get_class_location(class_name, class_map, version):
     # Check if the current class has a parent class
@@ -60,38 +61,31 @@ def _set_instances(text, render):
 
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
-def _set_imports(text, render):
-    rendered = render(text)
-    res = None
-    try:
-        res = eval(rendered)
-    finally:
-        result = ""
-        classes = set()
-        if res:
-            for val in res:
-                if "range" in val:
-                    classes.add(val["range"].split("#")[1])
-        for val in classes:
-            result += "from ." + val + " import " + val + "\n"
-        return result
-
-
-# called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
-def _set_default(text, render):
+def _set_attribute(text, render):
     attribute = eval(render(text))
 
+    if is_required_profile(attribute['attr_origin']):
+        return attribute['label'] + ":" + _set_data_type(attribute) + _set_default(attribute)
+    else:
+        return ""
+
+def _set_default(attribute):
     if "range" in attribute and "isFixed" in attribute:
         return " = " + attribute["range"].split("#")[1] + "." + attribute["isFixed"]
-    if (
-        "multiplicity" in attribute
-        and attribute["multiplicity"] in ["M:0..n"]
-        and "range" in attribute
-    ):
-        return " = None"
-    if "range" not in attribute and "isFixed" in attribute:
-        return ' = "' + attribute["isFixed"] + '"'
-    return ""
+    elif "multiplicity" in attribute:
+        multiplicity = attribute["multiplicity"]
+        if multiplicity in ["M:1", "M:1..1"]:
+            return ""
+        if multiplicity in ["M:0..1"]:
+            return ""
+        elif multiplicity in ["M:0..n"] or "M:0.." in multiplicity:
+            return ""
+        elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
+            return ""
+        else:
+            return ""
+    else:
+        return ""
 
 
 def _is_primitive(datatype):
@@ -116,8 +110,10 @@ def _compute_data_type(attribute):
                 return "str"
             if datatype == "DateTime":
                 return "datetime"
+            if datatype == "MonthDay":
+                return "str" #TO BE FIXED
             if datatype == "Date":
-                return "date"
+                return "str" #TO BE FIXED
             if datatype == "Time":
                 return "time"
             if datatype == "Float":
@@ -127,24 +123,22 @@ def _compute_data_type(attribute):
             else:
                 return "float"
     if "range" in attribute:
+        #return "'"+attribute["range"].split("#")[1]+"'"
         return attribute["range"].split("#")[1]
 
-
-# called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
-def _set_data_type(text, render):
-    attribute = eval(render(text))
+def _set_data_type(attribute):
 
     datatype = _compute_data_type(attribute)
 
     if "multiplicity" in attribute:
         multiplicity = attribute["multiplicity"]
-        if multiplicity in ["M:1..1", ""]:
+        if multiplicity in ["M:1", "M:1..1", ""]:
             return datatype
         if multiplicity in ["M:0..1"]:
             return "Optional[" + datatype + "]"
         elif multiplicity in ["M:0..n"] or "M:0.." in multiplicity:
             return "Optional[List[" + datatype + "]]"
-        elif multiplicity in ["M:1", "M:1..n"] or "M:1.." in multiplicity:
+        elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
             return "List[" + datatype + "]"
         else:
             return "List[" + datatype + "]"
@@ -158,24 +152,14 @@ def _set_validator(text, render):
 
     datatype = _compute_data_type(attribute)
 
-    if "multiplicity" in attribute and not _is_primitive(datatype):
-        multiplicity = attribute["multiplicity"]
-        if (
-            multiplicity in ["M:0..n"]
-            or ("M:0.." in multiplicity and "M:0..1" not in multiplicity)
-        ) or (
-            multiplicity in ["M:1", "M:1..n"]
-            or ("M:1.." in multiplicity and "M:1..1" not in multiplicity)
-        ):
-            return (
-                "val_"
-                + datatype
-                + '_wrap = field_validator("'
-                + datatype
-                + '", mode="wrap")(cyclic_references_validator)'
-            )
-        else:
-            return ""
+    if not _is_primitive(datatype) and is_required_profile(attribute['attr_origin']):
+        return (
+            "val_"
+            + attribute['label']
+            + '_wrap = field_validator("'
+            + attribute['label']
+            + '", mode="wrap")(cyclic_references_validator)'
+        )
     else:
         return ""
 
@@ -188,36 +172,81 @@ def set_float_classes(new_float_classes):
     return
 
 
-def run_template(version_path, class_details):
-    if class_details["class_name"] in ["Float", "Integer", "String", "Boolean", "Date"]:
-        templates = []
-    elif class_details["has_instances"] == True:
-        templates = enum_template_files
-    else:
-        templates = template_files
+def has_unit_attribute(attributes):
+    for attr in attributes:
+        if attr['label'] == 'unit':
+            return True
+    return False
 
+
+def is_required_profile(class_origin):
+    for origin in class_origin:
+        if origin['origin'] in required_profiles:
+            return True
+    return False
+
+def run_template(version_path, class_details):
+    if (class_details["class_name"] in ["Float", "Integer", "String", "Boolean", "Date", "DateTime", "MonthDay", "PositionPoint", "Decimal"]) or class_details["is_a_float"] == True or "Version" in class_details["class_name"] or has_unit_attribute(class_details["attributes"]) or not is_required_profile(class_details['class_origin']):
+        return
+    elif class_details["has_instances"] == True:
+        run_template_enum(version_path, class_details, enum_template_files)
+    else:
+        run_template_schema(version_path, class_details, template_files)
+
+
+def run_template_enum(version_path, class_details, templates):
     for template_info in templates:
         class_file = os.path.join(
-            version_path, class_details["class_name"] + template_info["ext"]
+                version_path, "enum" + template_info["ext"]
         )
         if not os.path.exists(class_file):
             with open(class_file, "w") as file:
-                template_path = os.path.join(
-                    os.getcwd(), "pydantic/templates", template_info["filename"]
+                header_file_path = os.path.join(
+                    os.getcwd(), "pydantic", "enum_header.py"
                 )
-                class_details["setDefault"] = _set_default
-                class_details["setDataType"] = _set_data_type
-                class_details["setImports"] = _set_imports
-                class_details["setInstances"] = _set_instances
-                class_details["setValidator"] = _set_validator
-                with open(template_path) as f:
-                    args = {
-                        "data": class_details,
-                        "template": f,
-                        "partials_dict": partials,
-                    }
-                    output = chevron.render(**args)
-                file.write(output)
+                header_file = open(header_file_path, 'r')
+                file.write(header_file.read())
+        with open(class_file, "a") as file:
+            template_path = os.path.join(
+                os.getcwd(), "pydantic/templates", template_info["filename"]
+            )
+            class_details["setInstances"] = _set_instances
+            with open(template_path) as f:
+                args = {
+                    "data": class_details,
+                    "template": f,
+                    "partials_dict": partials,
+                }
+                output = chevron.render(**args)
+            file.write(output)
+
+
+def run_template_schema(version_path, class_details, templates):
+    for template_info in templates:
+        class_file = os.path.join(
+            version_path, "schema" + template_info["ext"]
+        )
+        if not os.path.exists(class_file):
+            with open(class_file, "w") as file:
+                schema_file_path = os.path.join(
+                    os.getcwd(), "pydantic", "schema_header.py"
+                )
+                schema_file = open(schema_file_path, 'r')
+                file.write(schema_file.read())
+        with open(class_file, "a") as file:
+            template_path = os.path.join(
+                os.getcwd(), "pydantic/templates", template_info["filename"]
+            )
+            class_details["setAttribute"] = _set_attribute
+            class_details["setValidator"] = _set_validator
+            with open(template_path) as f:
+                args = {
+                    "data": class_details,
+                    "template": f,
+                    "partials_dict": partials,
+                }
+                output = chevron.render(**args)
+            file.write(output)
 
 
 def _create_init(path):
@@ -228,26 +257,9 @@ def _create_init(path):
 
 # creates the Base class file, all classes inherit from this class
 def _copy_files(path):
-    shutil.copy("pydantic/Base.py", path + "/Base.py")
-    shutil.copy("pydantic/PositionPoint.py", path + "/PositionPoint.py")
-    shutil.copy("pydantic/util.py", path + "/util.py")
+    shutil.copy("./pydantic/Base.py", path + "/Base.py")
+    shutil.copy("./pydantic/util.py", path + "/util.py")
 
 
 def resolve_headers(path):
-    filenames = glob.glob(path + "/*.py")
-    include_names = []
-    for filename in filenames:
-        include_names.append(os.path.splitext(os.path.basename(filename))[0])
-    with open(path + "/__init__.py", "w") as header_file:
-        for include_name in include_names:
-            header_file.write(
-                "from "
-                + "."
-                + include_name
-                + " import "
-                + include_name
-                + " as "
-                + include_name
-                + "\n"
-            )
-        header_file.close()
+    pass

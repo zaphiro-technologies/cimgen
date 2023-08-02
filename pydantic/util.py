@@ -4,7 +4,7 @@ from pydantic import (
     ValidationInfo,
     ValidatorFunctionWrapHandler,
 )
-from typing import Iterator, List
+from typing import Iterator, Any
 
 
 def is_recursion_validation_error(exc: ValidationError) -> bool:
@@ -22,7 +22,7 @@ def suppress_recursion_validation_error() -> Iterator[None]:
 
 
 def cyclic_references_validator(
-    v: List, handler: ValidatorFunctionWrapHandler, info: ValidationInfo
+    v: Any, handler: ValidatorFunctionWrapHandler, info: ValidationInfo
 ):
     try:
         return handler(v)
