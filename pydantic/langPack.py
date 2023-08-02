@@ -156,6 +156,8 @@ def _set_data_type(attribute):
         elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
             return "List[" + datatype + "]"
         elif multiplicity_by_name:
+            # Most probably there is a bug in the RDF that states multiplicity
+            # M:1 but should be M:1..N
             return "List[" + datatype + "]"
         else:
             return "List[" + datatype + "]"
