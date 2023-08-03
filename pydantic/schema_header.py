@@ -45,8 +45,8 @@ class PositionPoint(Base):
         }
     )
 
-    Location: "Location"
-    sequenceNumber: Optional[int]
+    location: "Location" = Field(alias = "Location")
+    sequenceNumber: Optional[int] = Field(default=None)
     point: Point = Field(
         repr=False
     )  # we introduce this field compared to CIM definition because we want to store a proper geometry "point" in the database

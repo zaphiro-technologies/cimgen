@@ -9,7 +9,7 @@ class {{class_name}}({{sub_class_of}}):
     '''
 
     possibleProfileList: dict = Field(default={'class': [{{#class_origin}}CgmesProfileEnum.{{origin}}, {{/class_origin}}],
-						{{#attributes}}'{{label}}': [{{#attr_origin}}CgmesProfileEnum.{{origin}}, {{/attr_origin}}],
+						{{#attributes}}'{{#setLowerCase}}{{label}}{{/setLowerCase}}': [{{#attr_origin}}CgmesProfileEnum.{{origin}}, {{/attr_origin}}],
 						{{/attributes}} })
 
     {{#attributes}}

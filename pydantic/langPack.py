@@ -67,13 +67,19 @@ def _set_instances(text, render):
         return ""
 
 
+def _lower_case_first_char(str):
+    return str[:1].lower() + str[1:] if str else ''
+
+def _set_lower_case(text, render):
+    return _lower_case_first_char(render(text))
+
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
     attribute = eval(render(text))
 
     if is_required_profile(attribute["attr_origin"]):
         return (
-            attribute["label"]
+            _lower_case_first_char(attribute["label"])
             + ": "
             + _set_data_type(attribute)
             + _set_default(attribute)
@@ -83,24 +89,29 @@ def _set_attribute(text, render):
 
 
 def _set_default(attribute):
+    multiplicity_by_name = _ends_with_s(attribute["label"])
     if "range" in attribute and "isFixed" in attribute:
         return " = " + attribute["range"].split("#")[1] + "." + attribute["isFixed"]
     elif "label" in attribute and attribute["label"] == "mRID":
         return " = Field(default_factory=uuid.uuid4)"
     elif "multiplicity" in attribute:
         multiplicity = attribute["multiplicity"]
+        if multiplicity in ["M:1"] and multiplicity_by_name:
+            # Most probably there is a bug in the RDF that states multiplicity
+            # M:1 but should be M:1..N
+            return ' = Field(default=[], alias="'+attribute["label"]+'")'
         if multiplicity in ["M:1", "M:1..1"]:
-            return ""
+            return ' = Field(alias="'+attribute["label"]+'")'
         if multiplicity in ["M:0..1"]:
-            return ""
+            return ' = Field(default=None, alias="'+attribute["label"]+'")'
         elif multiplicity in ["M:0..n"] or "M:0.." in multiplicity:
-            return ""
+            return ' = Field(default=[], alias="'+attribute["label"]+'")'
         elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
-            return ""
+            return ' = Field(default=[], alias="'+attribute["label"]+'")'
         else:
-            return ""
+            return ' = Field(default=[], alias="'+attribute["label"]+'")'
     else:
-        return ""
+        return ' = Field(alias="'+attribute["label"]+'")'
 
 
 def _is_primitive(datatype):
@@ -183,9 +194,9 @@ def _set_validator(text, render):
     if not _is_primitive(datatype) and is_required_profile(attribute["attr_origin"]):
         return (
             "val_"
-            + attribute["label"]
+            + _lower_case_first_char(attribute["label"])
             + '_wrap = field_validator("'
-            + attribute["label"]
+            + _lower_case_first_char(attribute["label"])
             + '", mode="wrap")(cyclic_references_validator)'
         )
     elif attribute["label"] == "mRID":
@@ -294,6 +305,7 @@ def run_template_schema(version_path, class_details, templates):
             )
             class_details["setAttribute"] = _set_attribute
             class_details["setValidator"] = _set_validator
+            class_details["setLowerCase"] = _set_lower_case
             with open(template_path) as f:
                 args = {
                     "data": class_details,
