@@ -85,6 +85,8 @@ def _set_attribute(text, render):
 def _set_default(attribute):
     if "range" in attribute and "isFixed" in attribute:
         return " = " + attribute["range"].split("#")[1] + "." + attribute["isFixed"]
+    elif "label" in attribute and attribute["label"] == "mRID":
+        return " = Field(default_factory=uuid.uuid4)"
     elif "multiplicity" in attribute:
         multiplicity = attribute["multiplicity"]
         if multiplicity in ["M:1", "M:1..1"]:
@@ -110,7 +112,7 @@ def _is_primitive(datatype):
 
 def _compute_data_type(attribute):
     if "label" in attribute and attribute["label"] == "mRID":
-        return "uuid.UUID"
+        return "str"
 
     if "dataType" in attribute:
         if attribute["dataType"].startswith("#"):
@@ -185,6 +187,17 @@ def _set_validator(text, render):
             + '_wrap = field_validator("'
             + attribute["label"]
             + '", mode="wrap")(cyclic_references_validator)'
+        )
+    elif attribute["label"] == "mRID":
+        return (
+            '@field_validator("mRID", mode="before")\n'
+            +'    def validate_mrid_format(cls, v):\n'
+            +'      if isinstance(v, uuid.UUID):\n'
+            +'        return str(v)\n'
+            +'      elif isinstance(v, str):\n'
+            +'        return v\n'
+            +'      else:\n'
+            +'        raise ValueError("must be a UUID or str")\n'
         )
     else:
         return ""
