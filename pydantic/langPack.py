@@ -191,13 +191,13 @@ def _set_validator(text, render):
     elif attribute["label"] == "mRID":
         return (
             '@field_validator("mRID", mode="before")\n'
-            +'    def validate_mrid_format(cls, v):\n'
-            +'      if isinstance(v, uuid.UUID):\n'
-            +'        return str(v)\n'
-            +'      elif isinstance(v, str):\n'
-            +'        return v\n'
-            +'      else:\n'
-            +'        raise ValueError("must be a UUID or str")\n'
+            + "    def validate_mrid_format(cls, v):\n"
+            + "      if isinstance(v, uuid.UUID):\n"
+            + "        return str(v)\n"
+            + "      elif isinstance(v, str):\n"
+            + "        return v\n"
+            + "      else:\n"
+            + '        raise ValueError("must be a UUID or str")\n'
         )
     else:
         return ""
