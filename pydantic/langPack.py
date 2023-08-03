@@ -68,10 +68,12 @@ def _set_instances(text, render):
 
 
 def _lower_case_first_char(str):
-    return str[:1].lower() + str[1:] if str else ''
+    return str[:1].lower() + str[1:] if str else ""
+
 
 def _set_lower_case(text, render):
     return _lower_case_first_char(render(text))
+
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
@@ -99,19 +101,19 @@ def _set_default(attribute):
         if multiplicity in ["M:1"] and multiplicity_by_name:
             # Most probably there is a bug in the RDF that states multiplicity
             # M:1 but should be M:1..N
-            return ' = Field(default=[], alias="'+attribute["label"]+'")'
+            return ' = Field(default=[], alias="' + attribute["label"] + '")'
         if multiplicity in ["M:1", "M:1..1"]:
-            return ' = Field(alias="'+attribute["label"]+'")'
+            return ' = Field(alias="' + attribute["label"] + '")'
         if multiplicity in ["M:0..1"]:
-            return ' = Field(default=None, alias="'+attribute["label"]+'")'
+            return ' = Field(default=None, alias="' + attribute["label"] + '")'
         elif multiplicity in ["M:0..n"] or "M:0.." in multiplicity:
-            return ' = Field(default=[], alias="'+attribute["label"]+'")'
+            return ' = Field(default=[], alias="' + attribute["label"] + '")'
         elif multiplicity in ["M:1..n"] or "M:1.." in multiplicity:
-            return ' = Field(default=[], alias="'+attribute["label"]+'")'
+            return ' = Field(default=[], alias="' + attribute["label"] + '")'
         else:
-            return ' = Field(default=[], alias="'+attribute["label"]+'")'
+            return ' = Field(default=[], alias="' + attribute["label"] + '")'
     else:
-        return ' = Field(alias="'+attribute["label"]+'")'
+        return ' = Field(alias="' + attribute["label"] + '")'
 
 
 def _is_primitive(datatype):
