@@ -529,6 +529,10 @@ def _write_files(class_details, outputPath, version):
         class_details["class_location"] = class_details["langPack"].base[
             "class_location"
         ](version)
+        class_details["super_init"] = False
+    else:
+        # If class is a subclass a super().__init__() is needed
+        class_details["super_init"] = True
 
     # The entry dataType for an attribute is only set for basic data types. If the entry is not set here, the attribute
     # is a reference to another class and therefore the entry dataType is generated and set to the multiplicity
