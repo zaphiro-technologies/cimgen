@@ -32,6 +32,13 @@ required_profiles = ["EQ"]
 
 enum_classes = {}
 
+one_to_one = {} 
+
+
+def _set_one_to_one(new_one_to_one):
+    global one_to_one
+    one_to_one.update(new_one_to_one)
+
 def get_class_location(class_name, class_map, version):
     # Check if the current class has a parent class
     if class_map[class_name].superClass():
@@ -55,7 +62,20 @@ def _lower_case_first_char(str):
 def _relationship_type(attribute):
     if "multiplicity" in attribute and "inverseMultiplicity" in attribute:
         if attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1"]:
-            return "ONE-TO-ONE"
+            name = attribute['about']
+            reverse = attribute['inverseRole']
+            if name in one_to_one:
+                # duplicated but father (should be impossible...)
+                return "ONE-TO-ONE-FATHER"
+            elif reverse in one_to_one:
+                # son
+                return "ONE-TO-ONE-SON"
+            else:
+                # father
+                temp = {}
+                temp[name] = attribute
+                _set_one_to_one(temp)
+                return "ONE-TO-ONE-FATHER"
         elif attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..n', "M:1..n", 'M:0..2']:
             return "ONE-TO-MANY"
         elif attribute["multiplicity"] in ['M:0..n', "M:1..n", 'M:0..2'] and  attribute["inverseMultiplicity"] in ['M:0..n', "M:1..n"]:
@@ -63,7 +83,7 @@ def _relationship_type(attribute):
         elif attribute["multiplicity"] in ['M:0..n', "M:1..n", 'M:0..2'] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1", 'M:0..2']:
             return "MANY-TO-ONE"
         else:
-            return "Boh"
+            return None
     else:
         return None
 
@@ -83,7 +103,7 @@ def _set_attribute(text, render):
     elif is_required_profile(attribute["attr_origin"]) and not _is_primitive(datatype) and "multiplicity" in attribute:
         relationship_type = _relationship_type(attribute)
 
-        if relationship_type == "ONE-TO-MANY":
+        if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
             mapper_1 = 'str'
             mapper_2 = _set_data_type(attribute)
             if attribute['multiplicity'] in ['M:0..1']:
@@ -110,7 +130,7 @@ def _set_attribute(text, render):
                 + ']'
                 + _set_column_relationship(attribute, relationship_type)
             )
-        if relationship_type == "MANY-TO-ONE":
+        elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
             return (
                 _lower_case_first_char(attribute["label"])
                 + ": Mapped["
@@ -194,9 +214,9 @@ def _set_column_primitive(attribute):
 
 def _set_column_relationship(attribute, relationship_type):
     back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
-    if relationship_type == "ONE-TO-MANY":
+    if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
         return '  =  relationship(back_populates="'+back_populate+'", foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
-    elif relationship_type == "MANY-TO-ONE":
+    elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
         return (
             '  =  relationship('
             + 'primaryjoin="'
