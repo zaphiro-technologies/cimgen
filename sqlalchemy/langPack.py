@@ -51,6 +51,22 @@ partials = {}
 def _lower_case_first_char(str):
     return str[:1].lower() + str[1:] if str else ''
 
+
+def _relationship_type(attribute):
+    if "multiplicity" in attribute and "inverseMultiplicity" in attribute:
+        if attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1"]:
+            return "ONE-TO-ONE"
+        elif attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..n', "M:1..n", 'M:0..2']:
+            return "ONE-TO-MANY"
+        elif attribute["multiplicity"] in ['M:0..n', "M:1..n", 'M:0..2'] and  attribute["inverseMultiplicity"] in ['M:0..n', "M:1..n"]:
+            return "MANY-TO-MANY"
+        elif attribute["multiplicity"] in ['M:0..n', "M:1..n", 'M:0..2'] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1", 'M:0..2']:
+            return "MANY-TO-ONE"
+        else:
+            return "Boh"
+    else:
+        return None
+
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
     attribute = eval(render(text))
@@ -65,9 +81,9 @@ def _set_attribute(text, render):
             + _set_column_primitive(attribute)
         )
     elif is_required_profile(attribute["attr_origin"]) and not _is_primitive(datatype) and "multiplicity" in attribute:
-        multiplicity = attribute["multiplicity"]
-        multiplicity_by_name = _ends_with_s(attribute["label"])
-        if multiplicity in ["M:1", "M:1..1", "M:0..1"] and not multiplicity_by_name:
+        relationship_type = _relationship_type(attribute)
+
+        if relationship_type == "ONE-TO-MANY":
             return (
                  _lower_case_first_char(attribute["label"])
                 + '_id'
@@ -86,24 +102,55 @@ def _set_attribute(text, render):
                 + ': Mapped['
                 + _set_data_type(attribute)
                 + ']'
-                + _set_column_relationship(attribute, multiplicity)
+                + _set_column_relationship(attribute, relationship_type)
             )
-        # elif multiplicity in ["M:0..1"] and not multiplicity_by_name:
-        #     return (
-        #         _lower_case_first_char(attribute["label"])
-        #         + ': Mapped['
-        #         + _set_data_type(attribute)
-        #         + ']'
-        #         + _set_column_relationship(attribute, multiplicity)
-        #     )
-        else:
+        if relationship_type == "MANY-TO-ONE":
             return (
                 _lower_case_first_char(attribute["label"])
                 + ": Mapped["
                 + _set_data_type(attribute)
                 + "]"
-                + _set_column_relationship(attribute, multiplicity)
-            )
+                + _set_column_relationship(attribute, relationship_type)
+                )
+        else:
+            return ''
+        # if multiplicity in ["M:1", "M:1..1", "M:0..1"] and not multiplicity_by_name:
+        #     return (
+        #          _lower_case_first_char(attribute["label"])
+        #         + '_id'
+        #         + ': Mapped[str] = mapped_column(ForeignKey(column="'
+        #         + _get_table_name( attribute["class_name"] )
+        #         + '.mRID",'
+        #         + 'name="fk_'
+        #         + _get_table_name(  attribute["class_name"] )
+        #         + '_'
+        #         + _get_table_name( attribute["domain"] )
+        #         + '_'
+        #         + _get_table_name( attribute["label"] )
+        #         + '",use_alter=True)'
+        #         + ')\n    '
+        #         + _lower_case_first_char(attribute["label"])
+        #         + ': Mapped['
+        #         + _set_data_type(attribute)
+        #         + ']'
+        #         + _set_column_relationship(attribute, multiplicity)
+        #     )
+        # # elif multiplicity in ["M:0..1"] and not multiplicity_by_name:
+        # #     return (
+        # #         _lower_case_first_char(attribute["label"])
+        # #         + ': Mapped['
+        # #         + _set_data_type(attribute)
+        # #         + ']'
+        # #         + _set_column_relationship(attribute, multiplicity)
+        # #     )
+        # else:
+        #     return (
+        #         _lower_case_first_char(attribute["label"])
+        #         + ": Mapped["
+        #         + _set_data_type(attribute)
+        #         + "]"
+        #         + _set_column_relationship(attribute, multiplicity)
+        #     )
     else:
         return ""
 
@@ -139,26 +186,31 @@ def _set_column_primitive(attribute):
     else:
         return ""
 
-def _set_column_relationship(attribute, multiplicity):
+def _set_column_relationship(attribute, relationship_type):
     back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
-    if multiplicity in ["M:1", "M:1..1", "M:0..1"]:
-        return '  =  relationship(back_populates="'+back_populate+'", remote_side=[mRID], foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
-    # elif multiplicity in ["M:0..1"]:
-    #     return '  =  relationship(back_populates="'+back_populate+'")'
-    else:
-        return (
-            '  =  relationship('
-            + 'primaryjoin="'
-            + attribute["domain"]
-            + '.mRID=='
-            + attribute["class_name"]
-            + '.'
-            + back_populate
-            + '_id'
-            + '",back_populates="'
-            + back_populate
-            + '", post_update=True)'
-            )
+    if relationship_type == "ONE-TO-MANY":
+        return '  =  relationship(back_populates="'+back_populate+'")'
+    elif relationship_type == "MANY-TO-ONE":
+        return '  =  relationship(back_populates="'+back_populate+'")'
+    # if multiplicity in ["M:1", "M:1..1", "M:0..1"]:
+    #     return '  =  relationship(back_populates="'+back_populate+'", remote_side=[mRID], foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
+    # # elif multiplicity in ["M:0..1"]:
+    # #     return '  =  relationship(back_populates="'+back_populate+'")'
+    # else:
+    # return (
+    #     '  =  relationship('
+    #     + 'primaryjoin="'
+    #     + attribute["domain"]
+    #     + '.mRID=='
+    #     + attribute["class_name"]
+    #     + '.'
+    #     + back_populate
+    #     + '_id'
+    #     + '",back_populates="'
+    #     + back_populate
+    #     + '", post_update=True)'
+    #     )
+    return ''
 
 def _is_primitive(datatype):
     if datatype in ["str", "int", "bool", "float", "date", "time", "datetime"]:

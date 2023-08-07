@@ -722,6 +722,27 @@ def findRootClass(superClassName, class_dict):
     return None
 
 
+def addInverseMultiplicity(class_dict):
+    temp = {}
+    for className in class_dict:
+        temp[className] = class_dict[className]
+        to_update = False
+        for attribute in _find_multiple_attributes(temp[className].attributes()):
+            if 'inverseRole' in attribute:
+                to_update = True
+                attribute['inverseMultiplicity'] = findInverseMultiplicity(attribute['inverseRole'], class_dict)
+        if not to_update:
+            del temp[className]
+    class_dict.update(temp)
+
+def findInverseMultiplicity(inverseRole, class_dict):
+    className = inverseRole.split('.')[0]
+    attributeLabel = inverseRole.split('.')[1]
+    for attribute in  _find_multiple_attributes(class_dict[className].attributes()):
+        if attribute['label'] == attributeLabel:
+            return attribute['multiplicity']
+    return None
+
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology
 
@@ -797,6 +818,7 @@ def cim_generate(directory, outputPath, version, langPack):
 
     addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
     addRootClassOfClean(clean_class_dict)
+    addInverseMultiplicity(clean_class_dict)
 
     # get information for writing python files and write python files
     _write_python_files(clean_class_dict, langPack, outputPath, version)
