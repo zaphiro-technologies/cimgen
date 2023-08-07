@@ -69,7 +69,8 @@ def _set_attribute(text, render):
         multiplicity_by_name = _ends_with_s(attribute["label"])
         if multiplicity in ["M:1", "M:1..1", "M:0..1"] and not multiplicity_by_name:
             return (
-                 _lower_case_first_char(attribute["label"])+"_id"
+                 _lower_case_first_char(attribute["label"])
+                + '_id'
                 + ': Mapped[str] = mapped_column(ForeignKey(column="'
                 + _get_table_name( attribute["class_name"] )
                 + '.mRID",'
@@ -82,18 +83,26 @@ def _set_attribute(text, render):
                 + '",use_alter=True)'
                 + ')\n    '
                 + _lower_case_first_char(attribute["label"])
-                + ": Mapped["
+                + ': Mapped['
                 + _set_data_type(attribute)
-                + "]"
-                + _set_column_relationship(attribute, True)
+                + ']'
+                + _set_column_relationship(attribute, multiplicity)
             )
+        # elif multiplicity in ["M:0..1"] and not multiplicity_by_name:
+        #     return (
+        #         _lower_case_first_char(attribute["label"])
+        #         + ': Mapped['
+        #         + _set_data_type(attribute)
+        #         + ']'
+        #         + _set_column_relationship(attribute, multiplicity)
+        #     )
         else:
             return (
                 _lower_case_first_char(attribute["label"])
                 + ": Mapped["
                 + _set_data_type(attribute)
                 + "]"
-                + _set_column_relationship(attribute, False)
+                + _set_column_relationship(attribute, multiplicity)
             )
     else:
         return ""
@@ -130,10 +139,12 @@ def _set_column_primitive(attribute):
     else:
         return ""
 
-def _set_column_relationship(attribute, foreignKey=True):
+def _set_column_relationship(attribute, multiplicity):
     back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
-    if foreignKey:
-        return '  =  relationship(back_populates="'+back_populate+'", foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
+    if multiplicity in ["M:1", "M:1..1", "M:0..1"]:
+        return '  =  relationship(back_populates="'+back_populate+'", remote_side=[mRID], foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
+    # elif multiplicity in ["M:0..1"]:
+    #     return '  =  relationship(back_populates="'+back_populate+'")'
     else:
         return (
             '  =  relationship('
@@ -242,7 +253,7 @@ def _set_mRID(text, render):
                 + _get_table_name( class1 )
                 + '.mRID", '
                 + 'name="fk_'+_get_table_name( class2 )+'_'+ _get_table_name( class1 )
-                + '",use_alter=True),'
+                + '"),'
                 + 'primary_key=True)'
         )
     else:
