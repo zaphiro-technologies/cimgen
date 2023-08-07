@@ -84,10 +84,16 @@ def _set_attribute(text, render):
         relationship_type = _relationship_type(attribute)
 
         if relationship_type == "ONE-TO-MANY":
+            mapper_1 = 'str'
+            mapper_2 = _set_data_type(attribute)
+            if attribute['multiplicity'] in ['M:0..1']:
+                mapper_1 = 'str|None'
             return (
                  _lower_case_first_char(attribute["label"])
                 + '_id'
-                + ': Mapped[str] = mapped_column(ForeignKey(column="'
+                + ': Mapped['
+                + mapper_1
+                + '] = mapped_column(ForeignKey(column="'
                 + _get_table_name( attribute["class_name"] )
                 + '.mRID",'
                 + 'name="fk_'
@@ -100,7 +106,7 @@ def _set_attribute(text, render):
                 + ')\n    '
                 + _lower_case_first_char(attribute["label"])
                 + ': Mapped['
-                + _set_data_type(attribute)
+                + mapper_2
                 + ']'
                 + _set_column_relationship(attribute, relationship_type)
             )
@@ -189,9 +195,21 @@ def _set_column_primitive(attribute):
 def _set_column_relationship(attribute, relationship_type):
     back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
     if relationship_type == "ONE-TO-MANY":
-        return '  =  relationship(back_populates="'+back_populate+'")'
+        return '  =  relationship(back_populates="'+back_populate+'", foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
     elif relationship_type == "MANY-TO-ONE":
-        return '  =  relationship(back_populates="'+back_populate+'")'
+        return (
+            '  =  relationship('
+            + 'primaryjoin="'
+            + attribute["domain"]
+            + '.mRID=='
+            + attribute["class_name"]
+            + '.'
+            + back_populate
+            + '_id'
+            + '",back_populates="'
+            + back_populate
+            + '", post_update=True)'
+        )
     # if multiplicity in ["M:1", "M:1..1", "M:0..1"]:
     #     return '  =  relationship(back_populates="'+back_populate+'", remote_side=[mRID], foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
     # # elif multiplicity in ["M:0..1"]:
