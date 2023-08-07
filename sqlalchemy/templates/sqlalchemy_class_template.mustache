@@ -1,0 +1,26 @@
+
+class {{class_name}}({{sub_class_of}}):
+    '''
+    {{{class_comment}}}
+    '''
+
+    {{#setTableName}}{{class_name}}{{/setTableName}}
+
+    {{#needsId}}
+    {{#setMRID}}{{class_name}}{{/setMRID}}
+    {{/needsId}}
+    {{^needsId}}
+    {{#setMRID}}{{sub_class_of}},{{class_name}}{{/setMRID}}
+    {{/needsId}}
+
+    {{#needsType}}
+    objectType: Mapped[str]  = mapped_column(String(255))
+    {{/needsType}}
+
+    {{#attributes}}
+    {{#setAttribute}}{{.}}{{/setAttribute}}
+    {{/attributes}}
+    
+    {{#needsMapper}}
+    {{#setMapper}}{{class_name}}{{/setMapper}}
+    {{/needsMapper}}

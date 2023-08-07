@@ -225,6 +225,7 @@ class CIMComponentDefinition:
         self.origin_list = []
         self.super = rdfsEntry.subClassOf()
         self.subclasses = []
+        self.root = rdfsEntry.subClassOf()
 
     def attributes(self):
         return self.attribute_list
@@ -254,6 +255,12 @@ class CIMComponentDefinition:
 
     def superClass(self):
         return self.super
+    
+    def rootClass(self):
+        return self.root
+
+    def setRootClass(self, root):
+        self.root = root
 
     def addSubClass(self, name):
         self.subclasses.append(name)
@@ -490,6 +497,7 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
             "langPack": langPack,
             "sub_class_of": elem_dict[class_name].superClass(),
             "sub_classes": elem_dict[class_name].subClasses(),
+            "root": elem_dict[class_name].rootClass(),
         }
 
         # extract comments
@@ -696,6 +704,23 @@ def addSubClassesOfSubClassesClean(class_dict, source):
                 addSubClassesOfSubClassesClean(temp, source)
     class_dict.update(temp)
 
+def addRootClassOfClean(class_dict):
+    temp = {}
+    for className in class_dict:
+        if class_dict[className].super:
+            temp[className] = class_dict[className]
+            temp[className].setRootClass(findRootClass(class_dict[className].super,class_dict))
+    class_dict.update(temp)
+
+def findRootClass(superClassName, class_dict):
+    for className in class_dict:
+        if className == superClassName:
+            if class_dict[className].super:
+                return findRootClass(class_dict[className].super,class_dict)
+            else:
+                return className
+    return None
+
 
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology
@@ -771,6 +796,7 @@ def cim_generate(directory, outputPath, version, langPack):
             clean_class_dict[className] = class_dict_with_origins[className]
 
     addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
+    addRootClassOfClean(clean_class_dict)
 
     # get information for writing python files and write python files
     _write_python_files(clean_class_dict, langPack, outputPath, version)
