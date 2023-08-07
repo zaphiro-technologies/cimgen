@@ -133,7 +133,7 @@ def _set_column_primitive(attribute):
 def _set_column_relationship(attribute, foreignKey=True):
     back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
     if foreignKey:
-        return '  =  relationship(back_populates="'+back_populate+'")'
+        return '  =  relationship(back_populates="'+back_populate+'", foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
     else:
         return (
             '  =  relationship('
