@@ -28,7 +28,7 @@ base = {"base_class": "Base", "class_location": location}
 
 template_files = [{"filename": "sqlalchemy_class_template.mustache", "ext": ".py"}]
 
-required_profiles = ["EQ"]
+required_profiles = ["EQ", "GL"]
 
 enum_classes = {}
 
@@ -66,6 +66,12 @@ def _lower_case_first_char(str):
 
 def _relationship_type(attribute):
     if "multiplicity" in attribute and "inverseMultiplicity" in attribute:
+        multiplicity_by_name = _ends_with_s(attribute["label"])
+        inverse_multiplicy_by_name = _ends_with_s(attribute["inverseRole"])
+        if attribute["multiplicity"] in ["M:1"] and multiplicity_by_name and attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1"]:
+            return "MANY-TO-ONE"
+        elif attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:1'] and inverse_multiplicy_by_name:
+            return "ONE-TO-MANY"
         if attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1"]:
             name = attribute['about']
             reverse = attribute['inverseRole']
