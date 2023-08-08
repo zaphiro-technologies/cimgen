@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Annotated, Optional
-from sqlalchemy import Column, Integer, String, Float, Boolean, TIMESTAMP, DateTime
+from sqlalchemy import Column, Integer, String, Float, Boolean, TIMESTAMP, DateTime, Table
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship, configure_mappers
