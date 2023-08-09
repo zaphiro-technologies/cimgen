@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Base(BaseModel):
+
+    model_config = ConfigDict(populate_by_name=True,defer_build=True)
     """
     Base Class for CIM
     """
