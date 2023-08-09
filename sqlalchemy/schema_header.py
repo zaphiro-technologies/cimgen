@@ -1,6 +1,15 @@
 from __future__ import annotations
 from typing import Annotated, Optional
-from sqlalchemy import Column, Integer, String, Float, Boolean, TIMESTAMP, DateTime, Table
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    Boolean,
+    TIMESTAMP,
+    DateTime,
+    Table,
+)
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship, configure_mappers
@@ -19,15 +28,17 @@ last_time = Annotated[
     ),
 ]
 
+
 class PositionPoint(Base):
     __tablename__ = "position_point"
-    id: Mapped[str] = mapped_column(String(255),primary_key=True,default=str(uuid.uuid4()))
-    location_id: Mapped[str|None] = mapped_column(String(255),ForeignKey("location.mRID"))
-    location: Mapped[Optional[Location]] = relationship(
-        back_populates="positionPoints"
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=str(uuid.uuid4())
     )
-    sequenceNumber: Mapped[int|None]
+    location_id: Mapped[str | None] = mapped_column(
+        String(255), ForeignKey("location.mRID")
+    )
+    location: Mapped[Optional[Location]] = relationship(back_populates="positionPoints")
+    sequenceNumber: Mapped[int | None]
     point: Mapped[Geometry("POINT")] = mapped_column(
         Geometry(srid=4326, geometry_type="POINT")
     )
-

@@ -32,17 +32,20 @@ required_profiles = ["EQ", "GL"]
 
 enum_classes = {}
 
-one_to_one = {} 
+one_to_one = {}
 
-association_tables = {} 
+association_tables = {}
+
 
 def _update_one_to_one(new_one_to_one):
     global one_to_one
     one_to_one.update(new_one_to_one)
 
+
 def _update_association_tables(new_association_tables):
     global association_tables
     association_tables.update(new_association_tables)
+
 
 def get_class_location(class_name, class_map, version):
     # Check if the current class has a parent class
@@ -60,21 +63,32 @@ def get_class_location(class_name, class_map, version):
 
 partials = {}
 
+
 def _lower_case_first_char(str):
-    return str[:1].lower() + str[1:] if str else ''
+    return str[:1].lower() + str[1:] if str else ""
 
 
 def _relationship_type(attribute):
     if "multiplicity" in attribute and "inverseMultiplicity" in attribute:
         multiplicity_by_name = _ends_with_s(attribute["label"])
         inverse_multiplicy_by_name = _ends_with_s(attribute["inverseRole"])
-        if attribute["multiplicity"] in ["M:1"] and multiplicity_by_name and attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1"]:
+        if (
+            attribute["multiplicity"] in ["M:1"]
+            and multiplicity_by_name
+            and attribute["inverseMultiplicity"] in ["M:0..1", "M:1", "M:1..1"]
+        ):
             return "MANY-TO-ONE"
-        elif attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:1'] and inverse_multiplicy_by_name:
+        elif (
+            attribute["multiplicity"] in ["M:0..1", "M:1", "M:1..1"]
+            and attribute["inverseMultiplicity"] in ["M:1"]
+            and inverse_multiplicy_by_name
+        ):
             return "ONE-TO-MANY"
-        if attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1"]:
-            name = attribute['about']
-            reverse = attribute['inverseRole']
+        if attribute["multiplicity"] in ["M:0..1", "M:1", "M:1..1"] and attribute[
+            "inverseMultiplicity"
+        ] in ["M:0..1", "M:1", "M:1..1"]:
+            name = attribute["about"]
+            reverse = attribute["inverseRole"]
             if name in one_to_one:
                 # duplicated but father (should be impossible...)
                 return "ONE-TO-ONE-FATHER"
@@ -87,11 +101,17 @@ def _relationship_type(attribute):
                 temp[name] = attribute
                 _update_one_to_one(temp)
                 return "ONE-TO-ONE-FATHER"
-        elif attribute["multiplicity"] in ['M:0..1', "M:1", "M:1..1"] and  attribute["inverseMultiplicity"] in ['M:0..n', "M:1..n", 'M:0..2']:
+        elif attribute["multiplicity"] in ["M:0..1", "M:1", "M:1..1"] and attribute[
+            "inverseMultiplicity"
+        ] in ["M:0..n", "M:1..n", "M:0..2"]:
             return "ONE-TO-MANY"
-        elif attribute["multiplicity"] in ['M:0..n', "M:1..n", 'M:0..2'] and  attribute["inverseMultiplicity"] in ['M:0..n', "M:1..n"]:
+        elif attribute["multiplicity"] in ["M:0..n", "M:1..n", "M:0..2"] and attribute[
+            "inverseMultiplicity"
+        ] in ["M:0..n", "M:1..n"]:
             return "MANY-TO-MANY"
-        elif attribute["multiplicity"] in ['M:0..n', "M:1..n", 'M:0..2'] and  attribute["inverseMultiplicity"] in ['M:0..1', "M:1", "M:1..1", 'M:0..2']:
+        elif attribute["multiplicity"] in ["M:0..n", "M:1..n", "M:0..2"] and attribute[
+            "inverseMultiplicity"
+        ] in ["M:0..1", "M:1", "M:1..1", "M:0..2"]:
             return "MANY-TO-ONE"
         else:
             return None
@@ -100,26 +120,34 @@ def _relationship_type(attribute):
 
 
 def _needs_many_to_many(class_details):
-    for attribute in class_details['attributes']:
+    for attribute in class_details["attributes"]:
         if _is_many_to_many(attribute):
             return True
     return False
 
 
 def _is_many_to_many(attribute):
-    if _relationship_type(attribute) == 'MANY-TO-MANY':
-            return True
+    if _relationship_type(attribute) == "MANY-TO-MANY":
+        return True
     else:
         return False
 
+
 def _set_association_table(text, render):
     attributes = eval(render(text))
-    association = ''
+    association = ""
     for attribute in attributes:
         if _is_many_to_many(attribute):
-            new_table_name = attribute['domain'] + "To" + attribute['range'].split('#')[1]
-            new_inverse_table_name = attribute['range'].split('#')[1] + "To" + attribute['domain']
-            if new_table_name not in association_tables and new_inverse_table_name not in association_tables:
+            new_table_name = (
+                attribute["domain"] + "To" + attribute["range"].split("#")[1]
+            )
+            new_inverse_table_name = (
+                attribute["range"].split("#")[1] + "To" + attribute["domain"]
+            )
+            if (
+                new_table_name not in association_tables
+                and new_inverse_table_name not in association_tables
+            ):
                 temp = {}
                 temp[new_table_name] = attribute
                 _update_association_tables(temp)
@@ -130,17 +158,18 @@ def _set_association_table(text, render):
                     + table_name
                     + '", Base.metadata, '
                     + 'Column("'
-                    + _get_table_name(attribute['domain'])
+                    + _get_table_name(attribute["domain"])
                     + '_mRID", ForeignKey("'
-                    + _get_table_name(attribute['domain'])
+                    + _get_table_name(attribute["domain"])
                     + '.mRID"), primary_key=True),'
                     + 'Column("'
-                    + _get_table_name(attribute['range'].split('#')[1])
+                    + _get_table_name(attribute["range"].split("#")[1])
                     + '_mRID", ForeignKey("'
-                    + _get_table_name(attribute['range'].split('#')[1])
+                    + _get_table_name(attribute["range"].split("#")[1])
                     + '.mRID"), primary_key=True))\n'
                 )
     return association
+
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
@@ -155,45 +184,52 @@ def _set_attribute(text, render):
             + "]"
             + _set_column_primitive(attribute)
         )
-    elif is_required_profile(attribute["attr_origin"]) and not _is_primitive(datatype) and "multiplicity" in attribute:
+    elif (
+        is_required_profile(attribute["attr_origin"])
+        and not _is_primitive(datatype)
+        and "multiplicity" in attribute
+    ):
         relationship_type = _relationship_type(attribute)
 
         if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
-            mapper_1 = 'str'
+            mapper_1 = "str"
             mapper_2 = _set_data_type(attribute)
-            if attribute['multiplicity'] in ['M:0..1']:
-                mapper_1 = 'str|None'
+            if attribute["multiplicity"] in ["M:0..1"]:
+                mapper_1 = "str|None"
             return (
-                 _lower_case_first_char(attribute["label"])
-                + '_id'
-                + ': Mapped['
+                _lower_case_first_char(attribute["label"])
+                + "_id"
+                + ": Mapped["
                 + mapper_1
                 + '] = mapped_column(ForeignKey(column="'
-                + _get_table_name( attribute["class_name"] )
+                + _get_table_name(attribute["class_name"])
                 + '.mRID",'
                 + 'name="fk_'
-                + _get_table_name(  attribute["class_name"] )
-                + '_'
-                + _get_table_name( attribute["domain"] )
-                + '_'
-                + _get_table_name( attribute["label"] )
+                + _get_table_name(attribute["class_name"])
+                + "_"
+                + _get_table_name(attribute["domain"])
+                + "_"
+                + _get_table_name(attribute["label"])
                 + '",use_alter=True)'
-                + ')\n    '
+                + ")\n    "
                 + _lower_case_first_char(attribute["label"])
-                + ': Mapped['
+                + ": Mapped["
                 + mapper_2
-                + ']'
+                + "]"
                 + _set_column_relationship(attribute, relationship_type)
             )
-        elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
+        elif (
+            relationship_type == "MANY-TO-ONE"
+            or relationship_type == "ONE-TO-ONE-FATHER"
+        ):
             return (
                 _lower_case_first_char(attribute["label"])
                 + ": Mapped["
                 + _set_data_type(attribute)
                 + "]"
                 + _set_column_relationship(attribute, relationship_type)
-                )
-        elif relationship_type == 'MANY-TO-MANY':
+            )
+        elif relationship_type == "MANY-TO-MANY":
             return (
                 _lower_case_first_char(attribute["label"])
                 + ": Mapped["
@@ -202,7 +238,7 @@ def _set_attribute(text, render):
                 + _set_column_relationship(attribute, relationship_type)
             )
         else:
-            return ''
+            return ""
         # if multiplicity in ["M:1", "M:1..1", "M:0..1"] and not multiplicity_by_name:
         #     return (
         #          _lower_case_first_char(attribute["label"])
@@ -247,7 +283,7 @@ def _set_attribute(text, render):
 def _set_column_primitive(attribute):
     if "label" in attribute and attribute["label"] == "mRID":
         return ""
-    elif attribute['class_name'] in enum_classes:
+    elif attribute["class_name"] in enum_classes:
         return " = mapped_column(String(255))"
     elif "dataType" in attribute:
         if attribute["dataType"].startswith("#"):
@@ -267,7 +303,7 @@ def _set_column_primitive(attribute):
             if datatype == "Time":
                 return " = mapped_column(String(255))"  # TO BE FIXED
             if datatype == "Float":
-                return  " = mapped_column(Float)"
+                return " = mapped_column(Float)"
             else:
                 return " = mapped_column(Float)"
         else:
@@ -275,39 +311,52 @@ def _set_column_primitive(attribute):
     else:
         return ""
 
+
 def _set_column_relationship(attribute, relationship_type):
     back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
     if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
-        return '  =  relationship(back_populates="'+back_populate+'", foreign_keys=['+ _lower_case_first_char(attribute["label"])+'_id])'
+        return (
+            '  =  relationship(back_populates="'
+            + back_populate
+            + '", foreign_keys=['
+            + _lower_case_first_char(attribute["label"])
+            + "_id])"
+        )
     elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
         return (
-            '  =  relationship('
+            "  =  relationship("
             + 'primaryjoin="'
             + attribute["domain"]
-            + '.mRID=='
+            + ".mRID=="
             + attribute["class_name"]
-            + '.'
+            + "."
             + back_populate
-            + '_id'
+            + "_id"
             + '",back_populates="'
             + back_populate
             + '", post_update=True)'
         )
-    elif relationship_type == 'MANY-TO-MANY':
-        new_table_name = attribute['domain'] + "To" + attribute['range'].split('#')[1]
-        new_inverse_table_name = attribute['range'].split('#')[1] + "To" + attribute['domain']
-        secondary_table = ''
+    elif relationship_type == "MANY-TO-MANY":
+        new_table_name = attribute["domain"] + "To" + attribute["range"].split("#")[1]
+        new_inverse_table_name = (
+            attribute["range"].split("#")[1] + "To" + attribute["domain"]
+        )
+        secondary_table = ""
         if new_table_name in association_tables:
             secondary_table = _get_table_name(new_table_name)
         elif new_inverse_table_name in association_tables:
             secondary_table = _get_table_name(new_inverse_table_name)
-        return ('  =  relationship('
-                + 'secondary='
-                + secondary_table
-                + ', back_populates="'+back_populate+'")'
+        return (
+            "  =  relationship("
+            + "secondary="
+            + secondary_table
+            + ', back_populates="'
+            + back_populate
+            + '")'
         )
     else:
-        return ''
+        return ""
+
 
 def _is_primitive(datatype):
     if datatype in ["str", "int", "bool", "float", "date", "time", "datetime"]:
@@ -344,7 +393,7 @@ def _compute_data_type(attribute):
             else:
                 return "float"
     if "range" in attribute:
-        if attribute['class_name'] in enum_classes:
+        if attribute["class_name"] in enum_classes:
             return "str"
         else:
             return attribute["range"].split("#")[1]
@@ -381,44 +430,58 @@ def _set_data_type(attribute):
     else:
         return datatype
 
+
 def _set_mapper(text, render):
     className = render(text)
-    tableName =  _get_table_name(className)
-    return ('__mapper_args__ = {\n'
-    + '      "polymorphic_identity": "' + tableName + '",\n'
-    + '      "polymorphic_on": "objectType",\n'
-    + '    }')
+    tableName = _get_table_name(className)
+    return (
+        "__mapper_args__ = {\n"
+        + '      "polymorphic_identity": "'
+        + tableName
+        + '",\n'
+        + '      "polymorphic_on": "objectType",\n'
+        + "    }"
+    )
+
 
 def _set_mRID(text, render):
     className = render(text)
     if className and not "," in className:
-        return ('mRID: Mapped[str] = mapped_column(String(255), primary_key=True)'
-        )
+        return "mRID: Mapped[str] = mapped_column(String(255), primary_key=True)"
     elif className and "," in className:
         class1 = className.split(",")[0]
         class2 = className.split(",")[1]
-        return ('mRID: Mapped[str] = mapped_column(String(255),'
-                + 'ForeignKey(column="'
-                + _get_table_name( class1 )
-                + '.mRID", '
-                + 'name="fk_'+_get_table_name( class2 )+'_'+ _get_table_name( class1 )
-                + '"),'
-                + 'primary_key=True)'
+        return (
+            "mRID: Mapped[str] = mapped_column(String(255),"
+            + 'ForeignKey(column="'
+            + _get_table_name(class1)
+            + '.mRID", '
+            + 'name="fk_'
+            + _get_table_name(class2)
+            + "_"
+            + _get_table_name(class1)
+            + '"),'
+            + "primary_key=True)"
         )
     else:
         return ""
-    
-def _get_table_name( className ):
+
+
+def _get_table_name(className):
     import re
-    return re.sub('([A-Z]{1})', r'_\1',className).lower()[1:]
+
+    return re.sub("([A-Z]{1})", r"_\1", className).lower()[1:]
+
 
 def _set_table_name(text, render):
     className = render(text)
-    return '__tablename__ = "' + _get_table_name(className) +'"'
+    return '__tablename__ = "' + _get_table_name(className) + '"'
+
 
 def set_enum_classes(new_enum_classes):
     global enum_classes
     enum_classes = new_enum_classes
+
 
 def set_float_classes(new_float_classes):
     return
@@ -483,9 +546,15 @@ def run_template_schema(version_path, class_details, templates):
 
             class_details["setAssociationTable"] = _set_association_table
             class_details["needsManyToMany"] = _needs_many_to_many(class_details)
-            class_details["needsMapper"] = len(class_details["sub_classes"]) > 0 or class_details["sub_class_of"] != "Base"
+            class_details["needsMapper"] = (
+                len(class_details["sub_classes"]) > 0
+                or class_details["sub_class_of"] != "Base"
+            )
             class_details["needsId"] = class_details["sub_class_of"] == "Base"
-            class_details["needsType"] = class_details["sub_class_of"] == "Base" and len(class_details["sub_classes"]) > 0
+            class_details["needsType"] = (
+                class_details["sub_class_of"] == "Base"
+                and len(class_details["sub_classes"]) > 0
+            )
             class_details["setAttribute"] = _set_attribute
             class_details["setTableName"] = _set_table_name
             class_details["setMapper"] = _set_mapper

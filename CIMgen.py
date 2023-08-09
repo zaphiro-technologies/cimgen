@@ -255,7 +255,7 @@ class CIMComponentDefinition:
 
     def superClass(self):
         return self.super
-    
+
     def rootClass(self):
         return self.root
 
@@ -704,19 +704,23 @@ def addSubClassesOfSubClassesClean(class_dict, source):
                 addSubClassesOfSubClassesClean(temp, source)
     class_dict.update(temp)
 
+
 def addRootClassOfClean(class_dict):
     temp = {}
     for className in class_dict:
         if class_dict[className].super:
             temp[className] = class_dict[className]
-            temp[className].setRootClass(findRootClass(class_dict[className].super,class_dict))
+            temp[className].setRootClass(
+                findRootClass(class_dict[className].super, class_dict)
+            )
     class_dict.update(temp)
+
 
 def findRootClass(superClassName, class_dict):
     for className in class_dict:
         if className == superClassName:
             if class_dict[className].super:
-                return findRootClass(class_dict[className].super,class_dict)
+                return findRootClass(class_dict[className].super, class_dict)
             else:
                 return className
     return None
@@ -728,20 +732,24 @@ def addInverseMultiplicity(class_dict):
         temp[className] = class_dict[className]
         to_update = False
         for attribute in _find_multiple_attributes(temp[className].attributes()):
-            if 'inverseRole' in attribute:
+            if "inverseRole" in attribute:
                 to_update = True
-                attribute['inverseMultiplicity'] = findInverseMultiplicity(attribute['inverseRole'], class_dict)
+                attribute["inverseMultiplicity"] = findInverseMultiplicity(
+                    attribute["inverseRole"], class_dict
+                )
         if not to_update:
             del temp[className]
     class_dict.update(temp)
 
+
 def findInverseMultiplicity(inverseRole, class_dict):
-    className = inverseRole.split('.')[0]
-    attributeLabel = inverseRole.split('.')[1]
-    for attribute in  _find_multiple_attributes(class_dict[className].attributes()):
-        if attribute['label'] == attributeLabel:
-            return attribute['multiplicity']
+    className = inverseRole.split(".")[0]
+    attributeLabel = inverseRole.split(".")[1]
+    for attribute in _find_multiple_attributes(class_dict[className].attributes()):
+        if attribute["label"] == attributeLabel:
+            return attribute["multiplicity"]
     return None
+
 
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology

@@ -45,7 +45,7 @@ class PositionPoint(Base):
         }
     )
 
-    location: "Location" = Field(alias = "Location")
+    location: "Location" = Field(alias="Location")
     sequenceNumber: Optional[int] = Field(default=None)
     point: Point = Field(
         repr=False
