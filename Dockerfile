@@ -9,6 +9,7 @@ COPY java/              /CIMgen/java/
 COPY javascript/        /CIMgen/javascript/
 COPY python/            /CIMgen/python/
 COPY pydantic/            /CIMgen/pydantic/
+COPY sqlalchemy/            /CIMgen/sqlalchemy/
 COPY CIMgen.py build.py /CIMgen/
 COPY cgmes_schema/ /cgmes_schema
 WORKDIR /CIMgen
