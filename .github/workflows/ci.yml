@@ -28,6 +28,8 @@ jobs:
           - cpp
           - java
           - javascript
+          - pydantic
+          - sqlalchemy
 
     steps:
     - uses: actions/checkout@v3

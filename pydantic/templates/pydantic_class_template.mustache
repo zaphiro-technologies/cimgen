@@ -1,0 +1,23 @@
+
+class {{class_name}}({{sub_class_of}}):
+    '''
+    {{{class_comment}}}
+
+    {{#attributes}}
+	:{{label}}: {{{comment}}}
+    {{/attributes}}
+    '''
+
+    possibleProfileList: dict = Field(default={'class': [{{#class_origin}}CgmesProfileEnum.{{origin}}, {{/class_origin}}],
+						{{#attributes}}'{{#setLowerCase}}{{label}}{{/setLowerCase}}': [{{#attr_origin}}CgmesProfileEnum.{{origin}}, {{/attr_origin}}],
+						{{/attributes}} })
+
+    {{#attributes}}
+    {{#setAttribute}}{{.}}{{/setAttribute}}
+    {{/attributes}}
+    
+    {{#attributes}}
+    {{#setValidator}}{{.}}{{/setValidator}}
+    {{/attributes}}
+
+    model_config = ConfigDict(from_attributes=True)

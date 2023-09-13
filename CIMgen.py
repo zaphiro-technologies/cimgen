@@ -225,6 +225,7 @@ class CIMComponentDefinition:
         self.origin_list = []
         self.super = rdfsEntry.subClassOf()
         self.subclasses = []
+        self.root = rdfsEntry.subClassOf()
 
     def attributes(self):
         return self.attribute_list
@@ -254,6 +255,12 @@ class CIMComponentDefinition:
 
     def superClass(self):
         return self.super
+
+    def rootClass(self):
+        return self.root
+
+    def setRootClass(self, root):
+        self.root = root
 
     def addSubClass(self, name):
         self.subclasses.append(name)
@@ -490,6 +497,7 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
             "langPack": langPack,
             "sub_class_of": elem_dict[class_name].superClass(),
             "sub_classes": elem_dict[class_name].subClasses(),
+            "root": elem_dict[class_name].rootClass(),
         }
 
         # extract comments
@@ -687,6 +695,62 @@ def addSubClassesOfSubClasses(class_dict):
         )
 
 
+def addSubClassesOfSubClassesClean(class_dict, source):
+    temp = {}
+    for className in class_dict:
+        for name in class_dict[className].subClasses():
+            if name not in class_dict:
+                temp[name] = source[name]
+                addSubClassesOfSubClassesClean(temp, source)
+    class_dict.update(temp)
+
+
+def addRootClassOfClean(class_dict):
+    temp = {}
+    for className in class_dict:
+        if class_dict[className].super:
+            temp[className] = class_dict[className]
+            temp[className].setRootClass(
+                findRootClass(class_dict[className].super, class_dict)
+            )
+    class_dict.update(temp)
+
+
+def findRootClass(superClassName, class_dict):
+    for className in class_dict:
+        if className == superClassName:
+            if class_dict[className].super:
+                return findRootClass(class_dict[className].super, class_dict)
+            else:
+                return className
+    return None
+
+
+def addInverseMultiplicity(class_dict):
+    temp = {}
+    for className in class_dict:
+        temp[className] = class_dict[className]
+        to_update = False
+        for attribute in _find_multiple_attributes(temp[className].attributes()):
+            if "inverseRole" in attribute:
+                to_update = True
+                attribute["inverseMultiplicity"] = findInverseMultiplicity(
+                    attribute["inverseRole"], class_dict
+                )
+        if not to_update:
+            del temp[className]
+    class_dict.update(temp)
+
+
+def findInverseMultiplicity(inverseRole, class_dict):
+    className = inverseRole.split(".")[0]
+    attributeLabel = inverseRole.split(".")[1]
+    for attribute in _find_multiple_attributes(class_dict[className].attributes()):
+        if attribute["label"] == attributeLabel:
+            return attribute["multiplicity"]
+    return None
+
+
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology
 
@@ -729,6 +793,8 @@ def cim_generate(directory, outputPath, version, langPack):
     # merge classes from different profiles into one class and track origin of the classes and their attributes
     class_dict_with_origins = _merge_classes(profiles_dict)
 
+    clean_class_dict = {}
+
     # work out the subclasses for each class by noting the reverse relationship
     for className in class_dict_with_origins:
         superClassName = class_dict_with_origins[className].superClass()
@@ -742,7 +808,27 @@ def cim_generate(directory, outputPath, version, langPack):
     # recursively add the subclasses of subclasses
     addSubClassesOfSubClasses(class_dict_with_origins)
 
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if (
+            superClassName == None
+            and class_dict_with_origins[className].has_instances()
+        ):
+            clean_class_dict[className] = class_dict_with_origins[className]
+
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if (
+            superClassName == None
+            and not class_dict_with_origins[className].has_instances()
+        ):
+            clean_class_dict[className] = class_dict_with_origins[className]
+
+    addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
+    addRootClassOfClean(clean_class_dict)
+    addInverseMultiplicity(clean_class_dict)
+
     # get information for writing python files and write python files
-    _write_python_files(class_dict_with_origins, langPack, outputPath, version)
+    _write_python_files(clean_class_dict, langPack, outputPath, version)
 
     logger.info("Elapsed Time: {}s\n\n".format(time() - t0))
