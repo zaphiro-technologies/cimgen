@@ -1,6 +1,6 @@
 # cimgen Release Notes
 
-## 0.0.1-dev - 2023-08-03
+## 0.0.1-dev - 2023-09-13
 
 ### Features
 
