@@ -13,8 +13,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       },
       {
         "title": "## Bug Fixes",
@@ -29,8 +29,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       },
       {
         "title": "## Continuous Integration",
@@ -45,8 +45,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       },
       {
         "title": "## Security",
@@ -61,8 +61,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       },
       {
         "title": "## Documentation",
@@ -77,8 +77,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       },
       {
         "title": "## Dependencies",
@@ -93,8 +93,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       },
       {
         "title": "## Refactoring",
@@ -109,8 +109,8 @@
             "on_property": "status"
           }
         ],
-        "exhaustive": "true",
-        "exhaustive_rules": "false"
+        "exhaustive": true,
+        "exhaustive_rules": false
       }
     ],
     "pr_template": "- ${{TITLE}} (PR #${{NUMBER}} by @${{AUTHOR}})",
