@@ -687,6 +687,16 @@ def addSubClassesOfSubClasses(class_dict):
         )
 
 
+def addSubClassesOfSubClassesClean(class_dict, source):
+    temp = {}
+    for className in class_dict:
+        for name in class_dict[className].subClasses():
+            if name not in class_dict:
+                temp[name] = source[name]
+                addSubClassesOfSubClassesClean(temp, source)
+    class_dict.update(temp)
+
+
 def cim_generate(directory, outputPath, version, langPack):
     """Generates cgmes python classes from cgmes ontology
 
@@ -729,6 +739,8 @@ def cim_generate(directory, outputPath, version, langPack):
     # merge classes from different profiles into one class and track origin of the classes and their attributes
     class_dict_with_origins = _merge_classes(profiles_dict)
 
+    clean_class_dict = {}
+
     # work out the subclasses for each class by noting the reverse relationship
     for className in class_dict_with_origins:
         superClassName = class_dict_with_origins[className].superClass()
@@ -742,7 +754,25 @@ def cim_generate(directory, outputPath, version, langPack):
     # recursively add the subclasses of subclasses
     addSubClassesOfSubClasses(class_dict_with_origins)
 
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if (
+            superClassName == None
+            and class_dict_with_origins[className].has_instances()
+        ):
+            clean_class_dict[className] = class_dict_with_origins[className]
+
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if (
+            superClassName == None
+            and not class_dict_with_origins[className].has_instances()
+        ):
+            clean_class_dict[className] = class_dict_with_origins[className]
+
+    addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
+
     # get information for writing python files and write python files
-    _write_python_files(class_dict_with_origins, langPack, outputPath, version)
+    _write_python_files(clean_class_dict, langPack, outputPath, version)
 
     logger.info("Elapsed Time: {}s\n\n".format(time() - t0))
