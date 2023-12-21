@@ -46,7 +46,18 @@ class RDFSEntry:
         if self.associationUsed() != None:
             jsonObject['associationUsed'] = self.associationUsed()
         jsonObject["isAssociationUsed"] = self.isAssociationUsed()
+        jsonObject["namespace"] = self.namespace()
         return jsonObject
+
+    def namespace(self):
+        if '$rdf:about' in self.jsonDefinition:
+            local_namespace = RDFSEntry._get_namespace(RDFSEntry._get_about_or_resource(self.jsonDefinition['$rdf:about']))
+        if local_namespace:
+            return local_namespace+"#"
+        elif 'base_namespace' in self.jsonDefinition:
+            return self.jsonDefinition['base_namespace']+"#"
+        else:
+            return None
 
     def about(self):
         if '$rdf:about' in self.jsonDefinition:
@@ -200,6 +211,14 @@ class RDFSEntry:
         if len(tokens) > 1:
             return tokens[1]
         return name
+    
+    def _get_namespace(name):
+        tokens = name.split('#')
+        if len(tokens) == 1:
+            return None
+        if len(tokens) > 1:
+            return tokens[0]
+        return None
 
 class CIMComponentDefinition:
     def __init__(self, rdfsEntry):
@@ -210,6 +229,10 @@ class CIMComponentDefinition:
         self.super = rdfsEntry.subClassOf()
         self.subclasses = []
         self.stereotype = rdfsEntry.stereotype()
+        self.namespaceString = rdfsEntry.namespace()
+
+    def namespace(self):
+        return self.namespaceString
 
     def attributes(self):
         return self.attribute_list
@@ -398,10 +421,11 @@ def _parse_rdf(input_dic, version):
 
     # Generates list with dictionaries as elements
     descriptions = input_dic['rdf:RDF']['rdf:Description']
-
+    base_namespace = input_dic['rdf:RDF']['$xml:base']
 
     # Iterate over list elements
     for list_elem in descriptions:
+        list_elem['base_namespace'] = base_namespace
         rdfsEntry = RDFSEntry(list_elem)
         object_dic = rdfsEntry.asJson()
         rdfs_entry_types = _rdfs_entry_types(rdfsEntry, version)
@@ -456,28 +480,32 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
     enum_classes = {}
     primitive_classes = {}
     cim_data_type_classes = {}
+    data_classes = {}
 
     # Iterate over Classes
     for class_definition in elem_dict:
         if elem_dict[class_definition].is_a_float():
             float_classes[class_definition] = True
-        if elem_dict[class_definition].has_instances():
+        elif elem_dict[class_definition].has_instances():
             enum_classes[class_definition] = True
-        if elem_dict[class_definition].is_a_primitive():
+        elif elem_dict[class_definition].is_a_primitive():
             primitive_classes[class_definition] = True
-        if elem_dict[class_definition].is_a_cim_datatype():
+        elif elem_dict[class_definition].is_a_cim_datatype():
             cim_data_type_classes[class_definition] = True
-
+        else:
+            data_classes[class_definition] = elem_dict[class_definition].namespace()
+            
     langPack.set_float_classes(float_classes)
     langPack.set_enum_classes(enum_classes)
     langPack.set_primitive_classes(primitive_classes)
     langPack.set_cim_data_type_classes(cim_data_type_classes)
+    langPack.set_data_classes(data_classes)
 
     for class_name in elem_dict.keys():
 
         class_details = {
             "attributes": _find_multiple_attributes(elem_dict[class_name].attributes()),
-            "class_location": langPack.get_class_location(class_name, elem_dict, outputPath),
+            "class_location": langPack.get_class_location(class_name, elem_dict, version),
             "class_name": class_name,
             "class_origin": elem_dict[class_name].origins(),
             "instances": elem_dict[class_name].instances(),
@@ -488,6 +516,7 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
             "langPack": langPack,
             "sub_class_of": elem_dict[class_name].superClass(),
             "sub_classes": elem_dict[class_name].subClasses(),
+            "namespace": elem_dict[class_name].namespace(),
         }
 
         # extract comments
@@ -713,7 +742,10 @@ def cim_generate(directory, outputPath, version, langPack, clean_outdir):
 
     # clean directory
     if clean_outdir:
-        remove_tree(Path(outputPath))
+        try:
+            remove_tree(Path(outputPath))
+        except FileNotFoundError as fnfe:
+            logger.info("Directory is not present")
 
     profiles_array = []
 
@@ -759,6 +791,8 @@ def cim_generate(directory, outputPath, version, langPack, clean_outdir):
     _write_python_files(clean_class_dict, langPack, outputPath, version)
 
     if "modernpython" in langPack.__name__:
+        langPack.resolve_headers(outputPath, version)
+    elif "golang" in langPack.__name__:
         langPack.resolve_headers(outputPath, version)
     else:
         langPack.resolve_headers(outputPath)
