@@ -207,10 +207,7 @@ def has_unit_attribute(attributes):
     return False
 
 def run_template(version_path, class_details):
-    if class_details["class_name"] == 'PositionPoint':
-        #this class is created manually to support types conversions
-        return
-    elif class_details["is_a_primitive"] is True:
+    if class_details["is_a_primitive"] is True:
         # Primitives are never used in the in memory representation but only for
         # the schema
         return
@@ -287,7 +284,7 @@ def resolve_headers(dest: str, version: str):
         header_file.write('  "encoding/xml"\n')
         header_file.write(')\n\n')
         header_file.write("type RDF struct {\n")
-        header_file.write('  XMLName  xml.Name `xml:"http://www.w3.org/1999/02/22-rdf-syntax-ns# RDF"`')
+        header_file.write('  XMLName  xml.Name `xml:"http://www.w3.org/1999/02/22-rdf-syntax-ns# RDF"`\n')
         for data_class in data_classes:
             header_file.write('  '+ data_class +' []' + data_class + ' `xml:"' +data_classes[data_class]+' '+ data_class +'"`\n')
         header_file.write("}\n")
