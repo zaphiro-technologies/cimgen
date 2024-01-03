@@ -6,3 +6,4 @@ cimpy/*
 *.py[cod]
 __pycache__/
 .vscode/*
+.DS_Store
