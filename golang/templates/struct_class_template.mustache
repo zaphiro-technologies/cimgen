@@ -21,4 +21,31 @@ type {{class_name}} struct {
     {{^attributes}}
     /* No attributes defined for this class. */
     {{/attributes}}
+    className string `default:"{{class_name}}"`
+}
+
+func (c {{class_name}}) getType() string {
+    // TypeOf returns type of  
+    // interface value passed to it 
+    typ := reflect.TypeOf(c) 
+  
+    // checking if null string 
+    if c.className == "" { 
+          
+        // returns the struct field  
+        // with the given parameter "className" 
+        f, _ := typ.FieldByName("className") 
+          
+        // returns the value associated  
+        // with key in the tag string 
+        // and returns empty string if  
+        // no such key in tag 
+        c.className = f.Tag.Get("default") 
+    } 
+  
+    return fmt.Sprintf("%s", c.className) 
+}
+
+func (c *{{class_name}}) setType(className string) {
+    c.className = className
 }

@@ -27,8 +27,6 @@ def setup(version_path, cgmes_profile_info):  # NOSONAR
     if not os.path.exists(dest_dir):
        dest_dir.mkdir()
 
-    # copy_tree(str(source_dir), str(dest_dir))
-
 template_files = [{"filename": "struct_class_template.mustache", "ext": ".go"}]
 enum_template_files = [{"filename": "enum_class_template.mustache", "ext": ".go"}]
 
@@ -252,6 +250,10 @@ def run_template_schema(version_path, class_details, templates):
                 parent.mkdir()
             with open(class_file, "w", encoding="utf-8") as file:
                 file.write("package " + class_details["class_location"]+"\n\n")
+                file.write("import (\n")
+                file.write('    "fmt"\n')
+                file.write('    "reflect"\n')
+                file.write(")\n\n")
                 file.write("type resource string\n")
         with open(class_file, "a", encoding="utf-8") as file:
             template_path = os.path.join(os.getcwd(), "golang/templates", template_info["filename"])
@@ -278,13 +280,18 @@ def resolve_headers(dest: str, version: str):
     package_version = location("v"+version_number)
 
     dest = Path(dest)/"cgmes"/package_version
-    with open(dest / "rdf.go", "a", encoding="utf-8") as header_file:
+    with open(dest / "cgmes.go", "a", encoding="utf-8") as header_file:
         header_file.write(f"package {package_version}\n\n")
         header_file.write('import (\n')
         header_file.write('  "encoding/xml"\n')
         header_file.write(')\n\n')
-        header_file.write("type RDF struct {\n")
+        header_file.write("type CGMES struct {\n")
         header_file.write('  XMLName  xml.Name `xml:"http://www.w3.org/1999/02/22-rdf-syntax-ns# RDF"`\n')
+        header_file.write('  FullModel  FullModel `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# FullModel"`\n')
         for data_class in data_classes:
             header_file.write('  '+ data_class +' []' + data_class + ' `xml:"' +data_classes[data_class]+' '+ data_class +'"`\n')
         header_file.write("}\n")
+
+    source=Path(__file__).parent/"static"/package_version
+
+    copy_tree(str(source), str(dest))
