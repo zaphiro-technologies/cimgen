@@ -486,13 +486,13 @@ def _write_python_files(elem_dict, langPack, outputPath, version):
     for class_definition in elem_dict:
         if elem_dict[class_definition].is_a_float():
             float_classes[class_definition] = True
-        elif elem_dict[class_definition].has_instances():
+        if elem_dict[class_definition].has_instances():
             enum_classes[class_definition] = True
-        elif elem_dict[class_definition].is_a_primitive():
+        if elem_dict[class_definition].is_a_primitive():
             primitive_classes[class_definition] = True
-        elif elem_dict[class_definition].is_a_cim_datatype():
+        if elem_dict[class_definition].is_a_cim_datatype():
             cim_data_type_classes[class_definition] = True
-        else:
+        if not elem_dict[class_definition].is_a_float() and not elem_dict[class_definition].has_instances() and not elem_dict[class_definition].is_a_primitive() and not elem_dict[class_definition].is_a_cim_datatype():
             data_classes[class_definition] = elem_dict[class_definition].namespace()
             
     langPack.set_float_classes(float_classes)
