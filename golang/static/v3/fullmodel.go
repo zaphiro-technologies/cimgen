@@ -3,7 +3,7 @@ package v3
 type FullModel struct {
 	About                string   `xml:"about,attr"`
 	ModelingAuthoritySet string   `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# Model.modelingAuthoritySet"`
-	DependentOn          resource `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# Model.DependentOn"`
+	DependentOn          Resource `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# Model.DependentOn"`
 	Profile              []string `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# Model.profile"`
 	Description          string   `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# Model.description"`
 	Version              int      `xml:"http://iec.ch/TC57/61970-552/ModelDescription/1# Model.version"`

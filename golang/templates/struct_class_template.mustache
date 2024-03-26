@@ -24,7 +24,7 @@ type {{class_name}} struct {
     className string `default:"{{class_name}}"`
 }
 
-func (c {{class_name}}) getType() string {
+func (c {{class_name}}) GetType() string {
     // TypeOf returns type of  
     // interface value passed to it 
     typ := reflect.TypeOf(c) 
@@ -46,6 +46,6 @@ func (c {{class_name}}) getType() string {
     return fmt.Sprintf("%s", c.className) 
 }
 
-func (c *{{class_name}}) setType(className string) {
+func (c *{{class_name}}) SetType(className string) {
     c.className = className
 }

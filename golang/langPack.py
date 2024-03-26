@@ -75,7 +75,7 @@ def _compute_data_type(attribute):
     if "label" in attribute and attribute["label"] == "mRID":
         return "string"
     elif "range" in attribute:
-        return "resource"
+        return "Resource"
     elif "dataType" in attribute and "class_name" in attribute:
         # for whatever weird reason String is not created as class from CIMgen
         if is_primitive_class(attribute["class_name"]) or attribute["class_name"] == "String":
@@ -86,7 +86,7 @@ def _compute_data_type(attribute):
             return "float64"
         else:
         # this is for example the case for 'StreetAddress.streetDetail'
-            return "resource"
+            return "Resource"
     else:
         raise ValueError(f"Cannot parse {attribute} to extract a data type.")
 
@@ -139,7 +139,7 @@ def _get_type_xml_name(text, renderer) -> tuple[str, str, str]:
     field_type = datatype
     field_xml = ''
     field_name = _upper_case_first_char(attribute["label"])
-    if datatype == 'resource':
+    if datatype == 'Resource':
         field_name = field_name+"Id"
     if "multiplicity" in attribute:
         multiplicity = attribute["multiplicity"]
@@ -147,13 +147,13 @@ def _get_type_xml_name(text, renderer) -> tuple[str, str, str]:
             field_type = "*" + datatype
         elif multiplicity in ["M:0..n","M:1..n", "M:2..n"]:
             field_type = "[]" + datatype
-            if datatype == 'resource':
+            if datatype == 'Resource':
                 field_name = field_name+"s"
         elif multiplicity in ["M:1"] and attribute['label'] == 'PowerSystemResources':
             # Most probably there is a bug in the RDF that states multiplicity
             # M:1 but should be M:1..N
             field_type = "[]" + datatype
-            if datatype == 'resource':
+            if datatype == 'Resource':
                 field_name = field_name+"s"
         else:
             field_type = datatype
@@ -254,7 +254,7 @@ def run_template_schema(version_path, class_details, templates):
                 file.write('    "fmt"\n')
                 file.write('    "reflect"\n')
                 file.write(")\n\n")
-                file.write("type resource string\n")
+                file.write("type Resource string\n")
         with open(class_file, "a", encoding="utf-8") as file:
             template_path = os.path.join(os.getcwd(), "golang/templates", template_info["filename"])
             class_details["setType"] = _set_type
