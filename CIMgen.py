@@ -231,6 +231,9 @@ class CIMComponentDefinition:
         self.stereotype = rdfsEntry.stereotype()
         self.namespaceString = rdfsEntry.namespace()
 
+    def stereoptype(self):
+        return self.stereotype
+
     def namespace(self):
         return self.namespaceString
 
@@ -558,7 +561,7 @@ def _write_files(class_details, outputPath, version):
     if class_details['sub_class_of'] == None:
         # If class has no subClassOf key it is a subclass of the Base class
         class_details['sub_class_of'] = class_details['langPack'].base['base_class']
-        class_details['class_location'] = class_details['langPack'].base['class_location'](version)
+        #class_details['class_location'] = class_details['langPack'].base['class_location'](version)
         class_details['super_init'] = False
     else:
         # If class is a subclass a super().__init__() is needed

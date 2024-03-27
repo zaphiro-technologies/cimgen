@@ -14,6 +14,8 @@ type {{class_name}} struct {
     {{/attributes}}
     */
 
+    About string `xml:"http://www.w3.org/1999/02/22-rdf-syntax-ns# about,attr"`
+    ID string `xml:"http://www.w3.org/1999/02/22-rdf-syntax-ns# ID,attr"`
     {{#attributes}}
     {{#setName}}{{.}}{{/setName}} {{#setType}}{{.}}{{/setType}} {{#setXML}}{{.}}{{/setXML}}
     {{/attributes}}
