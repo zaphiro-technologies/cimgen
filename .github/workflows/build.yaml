@@ -23,6 +23,7 @@ jobs:
 
         schema:
         - CGMES_2.4.15_27JAN2020
+        - CGMES_3.0.0
 
     steps:
       - name: Checkout repo
