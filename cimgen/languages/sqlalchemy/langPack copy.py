@@ -1,10 +1,7 @@
 import os
-import re
 import chevron
 import logging
 import shutil
-from pathlib import Path
-from importlib.resources import files
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +11,11 @@ logger = logging.getLogger(__name__)
 # cgmes_profile_info details which uri belongs in each profile.
 # We don't use that here because we aren't creating the header
 # data for the separate profiles.
-def setup(output_path: str, cgmes_profile_details: list, cim_namespace: str):
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-        _create_init(output_path)
-        _copy_files(output_path)
+def setup(version_path, cgmes_profile_info):
+    if not os.path.exists(version_path):
+        os.makedirs(version_path)
+        _create_init(version_path)
+        _copy_files(version_path)
 
 
 def location(version):
@@ -27,7 +24,7 @@ def location(version):
 
 base = {"base_class": "Base", "class_location": location}
 
-template_files = {"filename": "sqlalchemy_class_template.mustache", "ext": ".py"}
+template_files = [{"filename": "sqlalchemy_class_template.mustache", "ext": ".py"}]
 
 required_profiles = ["EQ", "GL"]
 
@@ -60,6 +57,10 @@ def get_class_location(class_name, class_map, version):
 
 
 partials = {}
+
+
+def _lower_case_first_char(str):
+    return str[:1].lower() + str[1:] if str else ""
 
 
 def _relationship_type(attribute):
@@ -123,16 +124,23 @@ def _relationship_type(attribute):
 
 def _needs_many_to_many(class_details):
     for attribute in class_details["attributes"]:
-        if _relationship_type(attribute) == "MANY-TO-MANY":
+        if _is_many_to_many(attribute):
             return True
     return False
+
+
+def _is_many_to_many(attribute):
+    if _relationship_type(attribute) == "MANY-TO-MANY":
+        return True
+    else:
+        return False
 
 
 def _set_association_table(text, render):
     attributes = eval(render(text))
     association = ""
     for attribute in attributes:
-        if _relationship_type(attribute) == "MANY-TO-MANY":
+        if _is_many_to_many(attribute):
             new_table_name = attribute["domain"] + "To" + attribute["range"].split("#")[1]
             new_inverse_table_name = attribute["range"].split("#")[1] + "To" + attribute["domain"]
             if new_table_name not in association_tables and new_inverse_table_name not in association_tables:
@@ -165,7 +173,13 @@ def _set_attribute(text, render):
     datatype = _compute_data_type(attribute)
 
     if is_required_profile(attribute["attr_origin"]) and _is_primitive(datatype):
-        return attribute["label"] + ": Mapped[" + _set_data_type(attribute) + "]" + _set_column_primitive(attribute)
+        return (
+            _lower_case_first_char(attribute["label"])
+            + ": Mapped["
+            + _set_data_type(attribute)
+            + "]"
+            + _set_column_primitive(attribute)
+        )
     elif is_required_profile(attribute["attr_origin"]) and not _is_primitive(datatype) and "multiplicity" in attribute:
         relationship_type = _relationship_type(attribute)
 
@@ -175,22 +189,22 @@ def _set_attribute(text, render):
             if attribute["multiplicity"] in ["M:0..1"]:
                 mapper_1 = "str|None"
             return (
-                attribute["label"]
+                _lower_case_first_char(attribute["label"])
+                + "_id"
                 + ": Mapped["
                 + mapper_1
                 + '] = mapped_column(ForeignKey(column="'
-                + _get_table_name(attribute["attribute_class"])
+                + _get_table_name(attribute["class_name"])
                 + '.mRID",'
                 + 'name="fk_'
-                + _get_table_name(attribute["attribute_class"])
+                + _get_table_name(attribute["class_name"])
                 + "_"
                 + _get_table_name(attribute["domain"])
                 + "_"
                 + _get_table_name(attribute["label"])
                 + '",use_alter=True)'
                 + ")\n    "
-                + "_"
-                + attribute["label"]
+                + _lower_case_first_char(attribute["label"])
                 + ": Mapped["
                 + mapper_2
                 + "]"
@@ -198,7 +212,7 @@ def _set_attribute(text, render):
             )
         elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
             return (
-                attribute["label"]
+                _lower_case_first_char(attribute["label"])
                 + ": Mapped["
                 + _set_data_type(attribute)
                 + "]"
@@ -206,7 +220,7 @@ def _set_attribute(text, render):
             )
         elif relationship_type == "MANY-TO-MANY":
             return (
-                attribute["label"]
+                _lower_case_first_char(attribute["label"])
                 + ": Mapped["
                 + _set_data_type(attribute)
                 + "]"
@@ -214,14 +228,51 @@ def _set_attribute(text, render):
             )
         else:
             return ""
+        # if multiplicity in ["M:1", "M:1..1", "M:0..1"] and not multiplicity_by_name:
+        #     return (
+        #          _lower_case_first_char(attribute["label"])
+        #         + '_id'
+        #         + ': Mapped[str] = mapped_column(ForeignKey(column="'
+        #         + _get_table_name( attribute["class_name"] )
+        #         + '.mRID",'
+        #         + 'name="fk_'
+        #         + _get_table_name(  attribute["class_name"] )
+        #         + '_'
+        #         + _get_table_name( attribute["domain"] )
+        #         + '_'
+        #         + _get_table_name( attribute["label"] )
+        #         + '",use_alter=True)'
+        #         + ')\n    '
+        #         + _lower_case_first_char(attribute["label"])
+        #         + ': Mapped['
+        #         + _set_data_type(attribute)
+        #         + ']'
+        #         + _set_column_relationship(attribute, multiplicity)
+        #     )
+        # # elif multiplicity in ["M:0..1"] and not multiplicity_by_name:
+        # #     return (
+        # #         _lower_case_first_char(attribute["label"])
+        # #         + ': Mapped['
+        # #         + _set_data_type(attribute)
+        # #         + ']'
+        # #         + _set_column_relationship(attribute, multiplicity)
+        # #     )
+        # else:
+        #     return (
+        #         _lower_case_first_char(attribute["label"])
+        #         + ": Mapped["
+        #         + _set_data_type(attribute)
+        #         + "]"
+        #         + _set_column_relationship(attribute, multiplicity)
+        #     )
     else:
         return ""
 
 
 def _set_column_primitive(attribute):
-    if attribute.get("label", "") == "mRID":
+    if "label" in attribute and attribute["label"] == "mRID":
         return ""
-    elif attribute["is_enum_attribute"]:
+    elif attribute["class_name"] in enum_classes:
         return " = mapped_column(String(255))"
     elif "dataType" in attribute:
         if attribute["dataType"].startswith("#"):
@@ -251,20 +302,26 @@ def _set_column_primitive(attribute):
 
 
 def _set_column_relationship(attribute, relationship_type):
-    back_populate = attribute["inverseRole"].split(".")[1]
+    back_populate = _lower_case_first_char(attribute["inverseRole"].split(".")[1])
     if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
-        return '  =  relationship(back_populates="' + back_populate + '", foreign_keys=[' + attribute["label"] + "])"
+        return (
+            '  =  relationship(back_populates="'
+            + back_populate
+            + '", foreign_keys=['
+            + _lower_case_first_char(attribute["label"])
+            + "_id])"
+        )
     elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
         return (
-            " = relationship("
+            "  =  relationship("
             + 'primaryjoin="'
             + attribute["domain"]
             + ".mRID=="
-            + attribute["attribute_class"]
+            + attribute["class_name"]
             + "."
             + back_populate
+            + "_id"
             + '",back_populates="'
-            + "_"
             + back_populate
             + '", post_update=True)'
         )
@@ -292,10 +349,10 @@ def _compute_data_type(attribute):
     if "label" in attribute and attribute["label"] == "mRID":
         return "str"
 
-    if attribute["is_primitive_attribute"]:
+    if "dataType" in attribute:
         if attribute["dataType"].startswith("#"):
             datatype = attribute["dataType"].split("#")[1]
-            if datatype == "Integer":
+            if datatype == "Integer" or datatype == "integer":
                 return "int"
             if datatype == "Boolean":
                 return "bool"
@@ -309,16 +366,17 @@ def _compute_data_type(attribute):
                 return "str"  # TO BE FIXED
             if datatype == "Time":
                 return "time"
+            if datatype == "Float":
+                return "float"
             if datatype == "String":
                 return "str"
             else:
                 return "float"
-    elif attribute["is_datatype_attribute"]:
-        return "float"
-    elif attribute["is_enum_attribute"]:
-        return "str"
-    else:
-        return attribute["attribute_class"]
+    if "range" in attribute:
+        if attribute["class_name"] in enum_classes:
+            return "str"
+        else:
+            return attribute["range"].split("#")[1]
 
 
 def _ends_with_s(attribute_name):
@@ -327,8 +385,6 @@ def _ends_with_s(attribute_name):
 
 def _set_data_type(attribute):
     datatype = _compute_data_type(attribute)
-    if datatype == attribute["attribute_class"]:
-        datatype += "Class"
     multiplicity_by_name = _ends_with_s(attribute["label"])
 
     if "multiplicity" in attribute:
@@ -392,12 +448,23 @@ def _set_mRID(text, render):
 
 
 def _get_table_name(className):
+    import re
+
     return re.sub("([A-Z]{1})", r"_\1", className).lower()[1:]
 
 
 def _set_table_name(text, render):
     className = render(text)
     return '__tablename__ = "' + _get_table_name(className) + '"'
+
+
+def set_enum_classes(new_enum_classes):
+    global enum_classes
+    enum_classes = new_enum_classes
+
+
+def set_float_classes(new_float_classes):
+    return
 
 
 def has_unit_attribute(attributes):
@@ -416,59 +483,64 @@ def is_required_profile(class_origin):
 
 def run_template(version_path, class_details):
     if (
-        class_details["is_a_primitive_class"]
-        or class_details["is_a_datatype_class"]
+        (
+            class_details["class_name"]
+            in [
+                "Float",
+                "Integer",
+                "String",
+                "Boolean",
+                "Date",
+                "DateTime",
+                "MonthDay",
+                "PositionPoint",
+                "Decimal",
+            ]
+        )
+        or class_details["is_a_float"] is True
         or "Version" in class_details["class_name"]
         or has_unit_attribute(class_details["attributes"])
         or not is_required_profile(class_details["class_origin"])
     ):
         return
-    elif class_details["is_an_enum_class"]:
+    elif class_details["has_instances"] is True:
         return
     else:
         run_template_schema(version_path, class_details, template_files)
 
 
 def run_template_schema(version_path, class_details, templates):
-    class_file = os.path.join(version_path, "schema" + templates["ext"])
-    if not os.path.exists(class_file):
-        with open(class_file, "w") as file:
-            schema_file_path = os.path.join(os.getcwd(), "cimgen", "languages", "sqlalchemy", "schema_header.py")
-            schema_file = open(schema_file_path, "r")
-            file.write(schema_file.read())
+    for template_info in templates:
+        class_file = os.path.join(version_path, "schema" + template_info["ext"])
+        if not os.path.exists(class_file):
+            with open(class_file, "w") as file:
+                schema_file_path = os.path.join(os.getcwd(), "sqlalchemy", "schema_header.py")
+                schema_file = open(schema_file_path, "r")
+                file.write(schema_file.read())
+        with open(class_file, "a") as file:
+            template_path = os.path.join(os.getcwd(), "sqlalchemy/templates", template_info["filename"])
 
-    class_details["setImports"] = _setImports(class_details)
-    class_details["setAssociationTable"] = _set_association_table
-    class_details["needsManyToMany"] = _needs_many_to_many(class_details)
-    class_details["needsMapper"] = len(class_details["sub_classes"]) > 0 or class_details["sub_class_of"] != "Base"
-    class_details["needsId"] = class_details["sub_class_of"] == "Base"
-    class_details["needsType"] = class_details["sub_class_of"] == "Base" and len(class_details["sub_classes"]) > 0
-    class_details["setAttribute"] = _set_attribute
-    class_details["setTableName"] = _set_table_name
-    class_details["setMapper"] = _set_mapper
-    class_details["setMRID"] = _set_mRID
-    resource_file = _create_file(version_path, class_details, templates)
-    _write_templated_file(resource_file, class_details, templates["filename"])
-
-
-def _create_file(output_path, class_details, template) -> str:
-    resource_file = Path(output_path) / "resources" / (class_details["class_name"] + template["ext"])
-    # ("schema" + template["ext"])
-    resource_file.parent.mkdir(exist_ok=True)
-    return str(resource_file)
-
-
-def _write_templated_file(class_file, class_details, template_filename):
-    with open(class_file, "a", encoding="utf-8") as file:
-        templates = files("cimgen.languages.sqlalchemy.templates")
-        with templates.joinpath(template_filename).open(encoding="utf-8") as f:
-            args = {
-                "data": class_details,
-                "template": f,
-                "partials_dict": partials,
-            }
-            output = chevron.render(**args)
-        file.write(output)
+            class_details["setAssociationTable"] = _set_association_table
+            class_details["needsManyToMany"] = _needs_many_to_many(class_details)
+            class_details["needsMapper"] = (
+                len(class_details["sub_classes"]) > 0 or class_details["sub_class_of"] != "Base"
+            )
+            class_details["needsId"] = class_details["sub_class_of"] == "Base"
+            class_details["needsType"] = (
+                class_details["sub_class_of"] == "Base" and len(class_details["sub_classes"]) > 0
+            )
+            class_details["setAttribute"] = _set_attribute
+            class_details["setTableName"] = _set_table_name
+            class_details["setMapper"] = _set_mapper
+            class_details["setMRID"] = _set_mRID
+            with open(template_path) as f:
+                args = {
+                    "data": class_details,
+                    "template": f,
+                    "partials_dict": partials,
+                }
+                output = chevron.render(**args)
+            file.write(output)
 
 
 def _create_init(path):
@@ -479,30 +551,9 @@ def _create_init(path):
 
 # creates the Base class file, all classes inherit from this class
 def _copy_files(path):
-    shutil.copy(os.path.join(os.getcwd(), "cimgen/languages/sqlalchemy/Base.py"), path + "/Base.py")
-    shutil.copy(os.path.join(os.getcwd(), "cimgen/languages/sqlalchemy/util.py"), path + "/util.py")
+    shutil.copy(os.path.join(os.getcwd(), "sqlalchemy/Base.py"), path + "/Base.py")
+    shutil.copy(os.path.join(os.getcwd(), "sqlalchemy/util.py"), path + "/util.py")
 
 
-def resolve_headers(path: str, version: str):
+def resolve_headers(path):
     pass
-
-
-def _setImports(class_details: dict):
-    attributes = class_details["attributes"]
-    import_set = set()
-    if class_details["sub_class_of"] == "Base":
-        import_set.add("from ..Base import Base")
-    else:
-        import_set.add("from ." + class_details["sub_class_of"] + " import " + class_details["sub_class_of"])
-    for attribute in attributes:
-        if attribute["is_list_attribute"] or attribute["is_class_attribute"]:
-            import_set.add(
-                "from ."
-                + attribute["attribute_class"]
-                + " import "
-                + attribute["attribute_class"]
-                + " as "
-                + attribute["attribute_class"]
-                + "Class"
-            )
-    return sorted(import_set)
