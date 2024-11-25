@@ -656,7 +656,7 @@ def cim_generate(directory, output_path, version, lang_pack):
 
     # recursively add the subclasses of subclasses
     addSubClassesOfSubClasses(class_dict_with_origins)
-
+    addInverseMultiplicity(class_dict_with_origins)
     # get information for writing python files and write python files
     _write_python_files(class_dict_with_origins, lang_pack, output_path, version)
 
@@ -789,3 +789,40 @@ def _get_bool_string(bool_value: bool) -> str:
         return "true"
     else:
         return ""
+
+
+def addInverseMultiplicity(class_dict):
+    temp = {}
+    for className in class_dict:
+        temp[className] = class_dict[className]
+        to_update = False
+        for attribute in _find_multiple_attributes(temp[className].attributes()):
+            if "inverseRole" in attribute:
+                to_update = True
+                attribute["inverseMultiplicity"] = findInverseMultiplicity(attribute["inverseRole"], class_dict)
+        if not to_update:
+            del temp[className]
+    class_dict.update(temp)
+
+
+def findInverseMultiplicity(inverseRole, class_dict):
+    className = inverseRole.split(".")[0]
+    attributeLabel = inverseRole.split(".")[1]
+    for attribute in _find_multiple_attributes(class_dict[className].attributes()):
+        if attribute["label"] == attributeLabel:
+            return attribute["multiplicity"]
+    return None
+
+
+# Find multiple entries for the same attribute
+def _find_multiple_attributes(attributes_array):
+    merged_attributes = []
+    for elem in attributes_array:
+        found = False
+        for i in range(len(merged_attributes)):
+            if elem["label"] == merged_attributes[i]["label"]:
+                found = True
+                break
+        if found is False:
+            merged_attributes.append(elem)
+    return merged_attributes
