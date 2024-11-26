@@ -37,6 +37,8 @@ one_to_one = {}
 
 association_tables = {}
 
+partials = {}
+
 
 def _update_one_to_one(new_one_to_one):
     global one_to_one
@@ -57,9 +59,6 @@ def get_class_location(class_name, class_map, version):
             return location(version)
     else:
         return location(version)
-
-
-partials = {}
 
 
 def _relationship_type(attribute):
@@ -162,11 +161,14 @@ def _set_association_table(text, render):
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
     attribute = eval(render(text))
-    datatype = _compute_data_type(attribute)
 
-    if is_required_profile(attribute["attr_origin"]) and _is_primitive(datatype):
+    if is_required_profile(attribute["attr_origin"]) and attribute["is_primitive_attribute"]:
         return attribute["label"] + ": Mapped[" + _set_data_type(attribute) + "]" + _set_column_primitive(attribute)
-    elif is_required_profile(attribute["attr_origin"]) and not _is_primitive(datatype) and "multiplicity" in attribute:
+    elif (
+        is_required_profile(attribute["attr_origin"])
+        and not attribute["is_primitive_attribute"]
+        and "multiplicity" in attribute
+    ):
         relationship_type = _relationship_type(attribute)
 
         if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
@@ -279,13 +281,6 @@ def _set_column_relationship(attribute, relationship_type):
         return "  =  relationship(" + "secondary=" + secondary_table + ', back_populates="' + back_populate + '")'
     else:
         return ""
-
-
-def _is_primitive(datatype):
-    if datatype in ["str", "int", "bool", "float", "date", "time", "datetime"]:
-        return True
-    else:
-        return False
 
 
 def _compute_data_type(attribute):
@@ -437,7 +432,7 @@ def run_template_schema(version_path, class_details, templates):
             schema_file = open(schema_file_path, "r")
             file.write(schema_file.read())
 
-    class_details["setImports"] = _setImports(class_details)
+    # class_details["setImports"] = _setImports(class_details)
     class_details["setAssociationTable"] = _set_association_table
     class_details["needsManyToMany"] = _needs_many_to_many(class_details)
     class_details["needsMapper"] = len(class_details["sub_classes"]) > 0 or class_details["sub_class_of"] != "Base"
@@ -452,8 +447,8 @@ def run_template_schema(version_path, class_details, templates):
 
 
 def _create_file(output_path, class_details, template) -> str:
-    resource_file = Path(output_path) / "resources" / (class_details["class_name"] + template["ext"])
-    # ("schema" + template["ext"])
+    resource_file = Path(output_path) / ("schema" + template["ext"])
+    # ("schema" + template["ext"])  "resources" / (class_details["class_name"] + template["ext"])
     resource_file.parent.mkdir(exist_ok=True)
     return str(resource_file)
 

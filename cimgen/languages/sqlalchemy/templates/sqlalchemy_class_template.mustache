@@ -1,34 +1,11 @@
-from __future__ import annotations
-from typing import Annotated, Optional
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Float,
-    Boolean,
-    TIMESTAMP,
-    DateTime,
-    Table,
-)
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship, configure_mappers
-from sqlalchemy import ForeignKey
-from sqlalchemy.sql import func
-from geoalchemy2 import Geometry
-from typing import List
-from datetime import datetime
-import uuid
-{{#setImports}}
-{{.}}
-{{/setImports}}
+
 {{#needsManyToMany}}
 {{#setAssociationTable}}
 {{attributes}}
 {{/setAssociationTable}}
 {{/needsManyToMany}}
 
-class {{class_name}}({{sub_class_of}}):
+class {{class_name}}Class({{sub_class_of}}Class):
     '''
     {{{class_comment}}}
     '''
@@ -37,21 +14,16 @@ class {{class_name}}({{sub_class_of}}):
 
     {{#needsId}}
     {{#setMRID}}{{class_name}}{{/setMRID}}
-
 {{/needsId}}
     {{^needsId}}
     {{#setMRID}}{{sub_class_of}},{{class_name}}{{/setMRID}}
-
 {{/needsId}}
     {{#needsType}}
     objectType: Mapped[str] = mapped_column(String(255))
-
 {{/needsType}}
     {{#attributes}}
     {{#setAttribute}}{{.}}{{/setAttribute}}
-
 {{/attributes}}
     {{#needsMapper}}
     {{#setMapper}}{{class_name}}{{/setMapper}}
-
 {{/needsMapper}}
