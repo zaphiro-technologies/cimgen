@@ -246,6 +246,12 @@ class CIMComponentDefinition:
     def superClass(self):
         return self.super
 
+    def rootClass(self):
+        return self.root
+
+    def setRootClass(self, root):
+        self.root = root
+
     def addSubClass(self, name):
         self.subclasses.append(name)
 
@@ -603,6 +609,35 @@ def addSubClassesOfSubClasses(class_dict):
         class_dict[className].setSubClasses(recursivelyAddSubClasses(class_dict, className))
 
 
+def addSubClassesOfSubClassesClean(class_dict, source):
+    temp = {}
+    for className in class_dict:
+        for name in class_dict[className].subClasses():
+            if name not in class_dict:
+                temp[name] = source[name]
+                addSubClassesOfSubClassesClean(temp, source)
+    class_dict.update(temp)
+
+
+def addRootClassOfClean(class_dict):
+    temp = {}
+    for className in class_dict:
+        if class_dict[className].super:
+            temp[className] = class_dict[className]
+            temp[className].setRootClass(findRootClass(class_dict[className].super, class_dict))
+    class_dict.update(temp)
+
+
+def findRootClass(superClassName, class_dict):
+    for className in class_dict:
+        if className == superClassName:
+            if class_dict[className].super:
+                return findRootClass(class_dict[className].super, class_dict)
+            else:
+                return className
+    return None
+
+
 def cim_generate(directory, output_path, version, lang_pack):
     """Generates cgmes python classes from cgmes ontology
 
@@ -643,6 +678,7 @@ def cim_generate(directory, output_path, version, lang_pack):
 
     # merge classes from different profiles into one class and track origin of the classes and their attributes
     class_dict_with_origins = _merge_classes(profiles_dict)
+    addSubClassesOfSubClasses(class_dict_with_origins)
 
     # work out the subclasses for each class by noting the reverse relationship
     for className in class_dict_with_origins:
@@ -654,11 +690,22 @@ def cim_generate(directory, output_path, version, lang_pack):
             else:
                 logger.error("No match for superClass in dict: %s", superClassName)
 
+    clean_class_dict = {}
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if superClassName is None and class_dict_with_origins[className].enum_instance_list:
+            clean_class_dict[className] = class_dict_with_origins[className]
+
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if superClassName is None and not class_dict_with_origins[className].enum_instance_list:
+            clean_class_dict[className] = class_dict_with_origins[className]
     # recursively add the subclasses of subclasses
-    addSubClassesOfSubClasses(class_dict_with_origins)
-    addInverseMultiplicity(class_dict_with_origins)
+    addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
+    addRootClassOfClean(clean_class_dict)
+    addInverseMultiplicity(clean_class_dict)
     # get information for writing python files and write python files
-    _write_python_files(class_dict_with_origins, lang_pack, output_path, version)
+    _write_python_files(clean_class_dict, lang_pack, output_path, version)
 
     lang_pack.resolve_headers(output_path, version)
 
