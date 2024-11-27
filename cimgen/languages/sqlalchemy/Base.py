@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 
 
-class Base(DeclarativeBase):
+class BaseClass(DeclarativeBase):
     def to_dict(self) -> dict:
         python_dict = {}
         for key, value in vars(self).items():

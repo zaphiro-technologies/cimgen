@@ -162,7 +162,9 @@ def _set_association_table(text, render):
 def _set_attribute(text, render):
     attribute = eval(render(text))
 
-    if is_required_profile(attribute["attr_origin"]) and attribute["is_primitive_attribute"]:
+    if is_required_profile(attribute["attr_origin"]) and (
+        attribute["is_primitive_attribute"] or attribute["is_datatype_attribute"] or attribute["is_enum_attribute"]
+    ):
         return attribute["label"] + ": Mapped[" + _set_data_type(attribute) + "]" + _set_column_primitive(attribute)
     elif (
         is_required_profile(attribute["attr_origin"])
@@ -231,7 +233,7 @@ def _set_column_primitive(attribute):
             if datatype == "Integer" or datatype == "integer":
                 return " = mapped_column(Integer)"
             if datatype == "Boolean":
-                return " = mapped_column(Boolean)"
+                return " = mapped_column(Boolean, default=False)"
             if datatype == "String":
                 return " = mapped_column(String(255))"
             if datatype == "DateTime":
@@ -255,14 +257,16 @@ def _set_column_primitive(attribute):
 def _set_column_relationship(attribute, relationship_type):
     back_populate = attribute["inverseRole"].split(".")[1]
     if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
-        return '  =  relationship(back_populates="' + back_populate + '", foreign_keys=[' + attribute["label"] + "])"
+        return ' = relationship(back_populates="' + back_populate + '", foreign_keys=[' + attribute["label"] + "])"
     elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
         return (
             " = relationship("
             + 'primaryjoin="'
             + attribute["domain"]
+            + "Class"
             + ".mRID=="
             + attribute["attribute_class"]
+            + "Class"
             + "."
             + back_populate
             + '",back_populates="'
@@ -278,7 +282,7 @@ def _set_column_relationship(attribute, relationship_type):
             secondary_table = _get_table_name(new_table_name)
         elif new_inverse_table_name in association_tables:
             secondary_table = _get_table_name(new_inverse_table_name)
-        return "  =  relationship(" + "secondary=" + secondary_table + ', back_populates="' + back_populate + '")'
+        return " = relationship(" + "secondary=" + secondary_table + ', back_populates="' + back_populate + '")'
     else:
         return ""
 
@@ -410,6 +414,8 @@ def is_required_profile(class_origin):
 
 
 def run_template(version_path, class_details):
+    # for attribute in class_details["attributes"]:
+    #     attribute["label"] = _lower_case_first_char(attribute["label"])
     if (
         class_details["is_a_primitive_class"]
         or class_details["is_a_datatype_class"]
