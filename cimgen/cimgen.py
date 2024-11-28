@@ -690,22 +690,10 @@ def cim_generate(directory, output_path, version, lang_pack):
             else:
                 logger.error("No match for superClass in dict: %s", superClassName)
 
-    clean_class_dict = {}
-    for className in class_dict_with_origins:
-        superClassName = class_dict_with_origins[className].superClass()
-        if superClassName is None and class_dict_with_origins[className].enum_instance_list:
-            clean_class_dict[className] = class_dict_with_origins[className]
-
-    for className in class_dict_with_origins:
-        superClassName = class_dict_with_origins[className].superClass()
-        if superClassName is None and not class_dict_with_origins[className].enum_instance_list:
-            clean_class_dict[className] = class_dict_with_origins[className]
-    # recursively add the subclasses of subclasses
-    addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
-    addRootClassOfClean(clean_class_dict)
-    addInverseMultiplicity(clean_class_dict)
+    _sort_classes_per_inheritance(class_dict_with_origins)
+    addInverseMultiplicity(class_dict_with_origins)
     # get information for writing python files and write python files
-    _write_python_files(clean_class_dict, lang_pack, output_path, version)
+    _write_python_files(class_dict_with_origins, lang_pack, output_path, version)
 
     lang_pack.resolve_headers(output_path, version)
 
@@ -873,3 +861,20 @@ def _find_multiple_attributes(attributes_array):
         if found is False:
             merged_attributes.append(elem)
     return merged_attributes
+
+
+def _sort_classes_per_inheritance(class_dict_with_origins: dict):
+    clean_class_dict = {}
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if superClassName is None and class_dict_with_origins[className].enum_instance_list:
+            clean_class_dict[className] = class_dict_with_origins[className]
+
+    for className in class_dict_with_origins:
+        superClassName = class_dict_with_origins[className].superClass()
+        if superClassName is None and not class_dict_with_origins[className].enum_instance_list:
+            clean_class_dict[className] = class_dict_with_origins[className]
+    # recursively add the subclasses of subclasses
+    addSubClassesOfSubClassesClean(clean_class_dict, class_dict_with_origins)
+    addRootClassOfClean(clean_class_dict)
+    class_dict_with_origins = clean_class_dict
