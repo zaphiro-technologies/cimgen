@@ -6,24 +6,25 @@
 {{/needsManyToMany}}
 
 class {{class_name}}Class({{sub_class_of}}Class):
-    '''
+    """
     {{{wrapped_class_comment}}}
-    '''
+    """
 
     {{#setTableName}}{{class_name}}{{/setTableName}}
 
-    {{#needsId}}
-    {{#setMRID}}{{class_name}}{{/setMRID}}
+{{#needsId}}
+    mRID: Mapped[str] = mapped_column(String(255), primary_key=True)
 {{/needsId}}
-    {{^needsId}}
+{{^needsId}}
     {{#setMRID}}{{sub_class_of}},{{class_name}}{{/setMRID}}
 {{/needsId}}
-    {{#needsType}}
+{{#needsType}}
     objectType: Mapped[str] = mapped_column(String(255))
 {{/needsType}}
-    {{#attributes}}
-    {{#setAttribute}}{{.}}{{/setAttribute}}
-{{/attributes}}
-    {{#needsMapper}}
-    {{#setMapper}}{{class_name}}{{/setMapper}}
+{{#attributes}}{{#setAttribute}}{{.}}{{/setAttribute}}{{/attributes}}
+{{#needsMapper}}
+    __mapper_args__ = {
+        "polymorphic_identity": "{{#setMapper}}{{class_name}}{{/setMapper}}",
+        "polymorphic_on": "objectType",
+    }
 {{/needsMapper}}

@@ -139,33 +139,47 @@ def _set_association_table(text, render):
                 temp[new_table_name] = attribute
                 _update_association_tables(temp)
                 table_name = _get_table_name(new_table_name)
-                association += (
-                    table_name
-                    + ' = Table("'
-                    + table_name
-                    + '", Base.metadata, '
-                    + 'Column("'
-                    + _get_table_name(attribute["domain"])
-                    + '_mRID", ForeignKey("'
-                    + _get_table_name(attribute["domain"])
-                    + '.mRID"), primary_key=True),'
-                    + 'Column("'
-                    + _get_table_name(attribute["range"].split("#")[1])
-                    + '_mRID", ForeignKey("'
-                    + _get_table_name(attribute["range"].split("#")[1])
-                    + '.mRID"), primary_key=True))\n'
+                association += f"""{table_name} = Table("{table_name}",
+                BaseClass.metadata,
+                Column(
+                    "{_get_table_name(attribute["domain"])}_mRID",
+                    ForeignKey("{_get_table_name(attribute["domain"])}.mRID"),
+                    primary_key = True,
+                ),
+                Column(
+                    "{_get_table_name(attribute["range"].split("#")[1])}_mRID", 
+                    ForeignKey("{_get_table_name(attribute["range"].split("#")[1])}.mRID"),
+                    primary_key=True
                 )
+            )\n"""
+                #     table_name
+                #     + ' = Table("'
+                #     + table_name
+                #     + '", Base.metadata, '
+                #     + 'Column("'
+                #     + _get_table_name(attribute["domain"])
+                #     + '_mRID", ForeignKey("'
+                #     + _get_table_name(attribute["domain"])
+                #     + '.mRID"), primary_key=True),'
+                #     + 'Column("'
+                #     + _get_table_name(attribute["range"].split("#")[1])
+                #     + '_mRID", ForeignKey("'
+                #     + _get_table_name(attribute["range"].split("#")[1])
+                #     + '.mRID"), primary_key=True))\n'
+                # )
     return association
 
 
 # called by chevron, text contains the label {{dataType}}, which is evaluated by the renderer (see class template)
 def _set_attribute(text, render):
     attribute = eval(render(text))
-
+    str_attribute = ""
     if is_required_profile(attribute["attr_origin"]) and (
         attribute["is_primitive_attribute"] or attribute["is_datatype_attribute"] or attribute["is_enum_attribute"]
     ):
-        return attribute["label"] + ": Mapped[" + _set_data_type(attribute) + "]" + _set_column_primitive(attribute)
+        str_attribute = (
+            f"""{attribute["label"]}: Mapped[{_set_data_type(attribute)}]{_set_column_primitive(attribute)}"""
+        )
     elif (
         is_required_profile(attribute["attr_origin"])
         and not attribute["is_primitive_attribute"]
@@ -177,49 +191,26 @@ def _set_attribute(text, render):
             mapper_1 = "str"
             mapper_2 = _set_data_type(attribute)
             if attribute["multiplicity"] in ["M:0..1"]:
-                mapper_1 = "str|None"
-            return (
-                attribute["label"]
-                + ": Mapped["
-                + mapper_1
-                + '] = mapped_column(ForeignKey(column="'
-                + _get_table_name(attribute["attribute_class"])
-                + '.mRID",'
-                + 'name="fk_'
-                + _get_table_name(attribute["attribute_class"])
-                + "_"
-                + _get_table_name(attribute["domain"])
-                + "_"
-                + _get_table_name(attribute["label"])
-                + '",use_alter=True)'
-                + ")\n    "
-                + "_"
-                + attribute["label"]
-                + ": Mapped["
-                + mapper_2
-                + "]"
-                + _set_column_relationship(attribute, relationship_type)
-            )
-        elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
-            return (
-                attribute["label"]
-                + ": Mapped["
-                + _set_data_type(attribute)
-                + "]"
-                + _set_column_relationship(attribute, relationship_type)
-            )
-        elif relationship_type == "MANY-TO-MANY":
-            return (
-                attribute["label"]
-                + ": Mapped["
-                + _set_data_type(attribute)
-                + "]"
-                + _set_column_relationship(attribute, relationship_type)
-            )
-        else:
-            return ""
-    else:
-        return ""
+                mapper_1 = "str | None"
+            str_attribute = f"""{attribute["label"]}: Mapped[{mapper_1}] = mapped_column(
+        ForeignKey(
+            column="{_get_table_name(attribute["attribute_class"])}.mRID",
+            name="fk_{_get_table_name(attribute["attribute_class"])}_{_get_table_name(attribute["domain"])}_{_get_table_name(attribute["label"])}",
+            use_alter=True,
+        )
+    )
+    _{attribute["label"]}: Mapped[{mapper_2}] {_set_column_relationship(attribute, relationship_type)}"""
+        elif (
+            relationship_type == "MANY-TO-ONE"
+            or relationship_type == "ONE-TO-ONE-FATHER"
+            or relationship_type == "MANY-TO-MANY"
+        ):
+            str_attribute = f"""{attribute["label"]}: Mapped[{_set_data_type(attribute)}] {
+                _set_column_relationship(attribute, relationship_type)}"""
+
+    if str_attribute:
+        str_attribute = "\n    " + str_attribute
+    return str_attribute
 
 
 def _set_column_primitive(attribute):
@@ -257,23 +248,16 @@ def _set_column_primitive(attribute):
 def _set_column_relationship(attribute, relationship_type):
     back_populate = attribute["inverseRole"].split(".")[1]
     if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
-        return ' = relationship(back_populates="' + back_populate + '", foreign_keys=[' + attribute["label"] + "])"
+        return f"""= relationship(
+        back_populates="{back_populate}",
+        foreign_keys=[{attribute["label"]}],
+    )"""
     elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
-        return (
-            " = relationship("
-            + 'primaryjoin="'
-            + attribute["domain"]
-            + "Class"
-            + ".mRID=="
-            + attribute["attribute_class"]
-            + "Class"
-            + "."
-            + back_populate
-            + '",back_populates="'
-            + "_"
-            + back_populate
-            + '", post_update=True)'
-        )
+        return f"""= relationship(
+        primaryjoin="{attribute["domain"]}Class.mRID=={attribute["attribute_class"]}Class.{back_populate}",
+        back_populates="_{back_populate}",
+        post_update=True,
+    )"""
     elif relationship_type == "MANY-TO-MANY":
         new_table_name = attribute["domain"] + "To" + attribute["range"].split("#")[1]
         new_inverse_table_name = attribute["range"].split("#")[1] + "To" + attribute["domain"]
@@ -282,7 +266,10 @@ def _set_column_relationship(attribute, relationship_type):
             secondary_table = _get_table_name(new_table_name)
         elif new_inverse_table_name in association_tables:
             secondary_table = _get_table_name(new_inverse_table_name)
-        return " = relationship(" + "secondary=" + secondary_table + ', back_populates="' + back_populate + '")'
+        return f"""= relationship(
+        secondary={secondary_table},
+        back_populates="{back_populate}",
+    )"""
     else:
         return ""
 
@@ -357,14 +344,7 @@ def _set_data_type(attribute):
 def _set_mapper(text, render):
     className = render(text)
     tableName = _get_table_name(className)
-    return (
-        "__mapper_args__ = {\n"
-        + '      "polymorphic_identity": "'
-        + tableName
-        + '",\n'
-        + '      "polymorphic_on": "objectType",\n'
-        + "    }"
-    )
+    return tableName
 
 
 def _set_mRID(text, render):
@@ -374,18 +354,14 @@ def _set_mRID(text, render):
     elif className and "," in className:
         class1 = className.split(",")[0]
         class2 = className.split(",")[1]
-        return (
-            "mRID: Mapped[str] = mapped_column(String(255),"
-            + 'ForeignKey(column="'
-            + _get_table_name(class1)
-            + '.mRID", '
-            + 'name="fk_'
-            + _get_table_name(class2)
-            + "_"
-            + _get_table_name(class1)
-            + '"),'
-            + "primary_key=True)"
-        )
+        return f"""mRID: Mapped[str] = mapped_column(
+        String(255),
+        ForeignKey(
+            column="{_get_table_name(class1)}.mRID",
+            name="fk_{_get_table_name(class2)}_{_get_table_name(class1)}",
+        ),
+        primary_key=True,
+    )"""
     else:
         return ""
 
@@ -486,24 +462,3 @@ def _copy_files(path):
 
 def resolve_headers(path: str, version: str):
     pass
-
-
-def _setImports(class_details: dict):
-    attributes = class_details["attributes"]
-    import_set = set()
-    if class_details["sub_class_of"] == "Base":
-        import_set.add("from ..Base import Base")
-    else:
-        import_set.add("from ." + class_details["sub_class_of"] + " import " + class_details["sub_class_of"])
-    for attribute in attributes:
-        if attribute["is_list_attribute"] or attribute["is_class_attribute"]:
-            import_set.add(
-                "from ."
-                + attribute["attribute_class"]
-                + " import "
-                + attribute["attribute_class"]
-                + " as "
-                + attribute["attribute_class"]
-                + "Class"
-            )
-    return sorted(import_set)
