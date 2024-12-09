@@ -152,21 +152,6 @@ def _set_association_table(text, render):
                     primary_key=True
                 )
             )\n"""
-                #     table_name
-                #     + ' = Table("'
-                #     + table_name
-                #     + '", Base.metadata, '
-                #     + 'Column("'
-                #     + _get_table_name(attribute["domain"])
-                #     + '_mRID", ForeignKey("'
-                #     + _get_table_name(attribute["domain"])
-                #     + '.mRID"), primary_key=True),'
-                #     + 'Column("'
-                #     + _get_table_name(attribute["range"].split("#")[1])
-                #     + '_mRID", ForeignKey("'
-                #     + _get_table_name(attribute["range"].split("#")[1])
-                #     + '.mRID"), primary_key=True))\n'
-                # )
     return association
 
 
@@ -178,7 +163,7 @@ def _set_attribute(text, render):
         attribute["is_primitive_attribute"] or attribute["is_datatype_attribute"] or attribute["is_enum_attribute"]
     ):
         str_attribute = (
-            f"""{attribute["label"]}: Mapped[{_set_data_type(attribute)}]{_set_column_primitive(attribute)}"""
+            f"""{attribute["label"]}: Mapped[Optional[{_set_data_type(attribute)}]]{_set_column_primitive(attribute)}"""
         )
     elif (
         is_required_profile(attribute["attr_origin"])
@@ -192,10 +177,26 @@ def _set_attribute(text, render):
             mapper_2 = _set_data_type(attribute)
             if attribute["multiplicity"] in ["M:0..1"]:
                 mapper_1 = "str | None"
-            str_attribute = f"""{attribute["label"]}: Mapped[{mapper_1}] = mapped_column(
+            fk_name = (
+                _get_table_name(attribute["attribute_class"])
+                + "_"
+                + _get_table_name(attribute["domain"])
+                + "_"
+                + _get_table_name(attribute["label"])
+            )
+            if len(fk_name) >= 61:
+                extra_len = (len(fk_name) - 58) // 3
+                fk_name = (
+                    _get_table_name(attribute["attribute_class"][:-extra_len])
+                    + "_"
+                    + _get_table_name(attribute["domain"][:-extra_len])
+                    + "_"
+                    + _get_table_name(attribute["label"][:-extra_len])
+                )
+            str_attribute = f"""{attribute["label"]}: Mapped[Optional[{mapper_1}]] = mapped_column(
         ForeignKey(
             column="{_get_table_name(attribute["attribute_class"])}.mRID",
-            name="fk_{_get_table_name(attribute["attribute_class"])}_{_get_table_name(attribute["domain"])}_{_get_table_name(attribute["label"])}",
+            name="fk_{fk_name}",
             use_alter=True,
         )
     )
