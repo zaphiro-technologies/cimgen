@@ -128,6 +128,7 @@ class RDFSEntry:
                 .replace("’", "'")
                 .replace("°", "")
                 .replace("\n", " ")
+                .replace(" ", "")
             )
         else:
             return None
@@ -690,7 +691,7 @@ def cim_generate(directory, output_path, version, lang_pack):
             else:
                 logger.error("No match for superClass in dict: %s", superClassName)
 
-    class_dict_with_origins = _sort_classes_per_inheritance(class_dict_with_origins)
+    # class_dict_with_origins = _sort_classes_per_inheritance(class_dict_with_origins)
     addInverseMultiplicity(class_dict_with_origins)
     # get information for writing python files and write python files
     _write_python_files(class_dict_with_origins, lang_pack, output_path, version)
