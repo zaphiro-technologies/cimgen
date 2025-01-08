@@ -29,7 +29,7 @@ base = {"base_class": "Base", "class_location": location}
 
 template_files = {"filename": "sqlalchemy_class_template.mustache", "ext": ".py"}
 
-required_profiles = ["EQ", "GL"]
+required_profiles = ["GL", "SC", "SSH", "TP", "SV", "EQ", "OP", "GL", "ZEQ", "ZOP", "ZTP"]
 
 enum_classes = {}
 
@@ -194,13 +194,10 @@ def _set_attribute(text, render):
                     + _get_table_name(attribute["label"][:-extra_len])
                 )
             str_attribute = f"""{attribute["label"]}: Mapped[Optional[{mapper_1}]] = mapped_column(
-        ForeignKey(
-            column="{_get_table_name(attribute["attribute_class"])}.mRID",
-            name="fk_{fk_name}",
-            use_alter=True,
+        ForeignKey("{_get_table_name(attribute["attribute_class"])}.mRID"
         )
-    )
-    _{attribute["label"]}: Mapped[{mapper_2}] {_set_column_relationship(attribute, relationship_type)}"""
+    )"""
+        # _{attribute["label"]}: Mapped[{mapper_2}] {_set_column_relationship(attribute, relationship_type)}"""
         elif (
             relationship_type == "MANY-TO-ONE"
             or relationship_type == "ONE-TO-ONE-FATHER"
@@ -250,14 +247,14 @@ def _set_column_relationship(attribute, relationship_type):
     back_populate = attribute["inverseRole"].split(".")[1]
     if relationship_type == "ONE-TO-MANY" or relationship_type == "ONE-TO-ONE-SON":
         return f"""= relationship(
-        back_populates="{back_populate}",
-        foreign_keys=[{attribute["label"]}],
+        #back_populates="{back_populate}",
+        #foreign_keys=[{attribute["label"]}],
     )"""
     elif relationship_type == "MANY-TO-ONE" or relationship_type == "ONE-TO-ONE-FATHER":
         return f"""= relationship(
         primaryjoin="{attribute["domain"]}Class.mRID=={attribute["attribute_class"]}Class.{back_populate}",
-        back_populates="_{back_populate}",
-        post_update=True,
+        #back_populates="_{back_populate}",
+        #post_update=True,
     )"""
     elif relationship_type == "MANY-TO-MANY":
         new_table_name = attribute["domain"] + "To" + attribute["range"].split("#")[1]
