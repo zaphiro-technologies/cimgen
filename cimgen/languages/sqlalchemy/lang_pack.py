@@ -147,7 +147,7 @@ def _set_association_table(text, render):
                     primary_key = True,
                 ),
                 Column(
-                    "{_get_table_name(attribute["range"].split("#")[1])}_mRID", 
+                    "{_get_table_name(attribute["range"].split("#")[1])}_mRID",
                     ForeignKey("{_get_table_name(attribute["range"].split("#")[1])}.mRID"),
                     primary_key=True
                 )
@@ -219,24 +219,25 @@ def _set_column_primitive(attribute):
     elif "dataType" in attribute:
         if attribute["dataType"].startswith("#"):
             datatype = attribute["dataType"].split("#")[1]
-            if datatype == "Integer" or datatype == "integer":
-                return " = mapped_column(Integer)"
-            if datatype == "Boolean":
-                return " = mapped_column(Boolean, default=False)"
-            if datatype == "String":
-                return " = mapped_column(String(255))"
-            if datatype == "DateTime":
-                return " = mapped_column(DateTime)"
-            if datatype == "MonthDay":
-                return " = mapped_column(String(255))"  # TO BE FIXED
-            if datatype == "Date":
-                return " = mapped_column(String(255))"  # TO BE FIXED
-            if datatype == "Time":
-                return " = mapped_column(String(255))"  # TO BE FIXED
-            if datatype == "Float":
-                return " = mapped_column(Float)"
-            else:
-                return " = mapped_column(Float)"
+            match datatype.lower():
+                case "integer":
+                    return " = mapped_column(Integer)"
+                case "boolean":
+                    return " = mapped_column(Boolean, default=False)"
+                case "string":
+                    return " = mapped_column(String(255))"
+                case "datetime":
+                    return " = mapped_column(DateTime)"
+                case "monthday":
+                    return " = mapped_column(String(255))"  # TO BE FIXED
+                case "date":
+                    return " = mapped_column(String(255))"  # TO BE FIXED
+                case "time":
+                    return " = mapped_column(String(255))"  # TO BE FIXED
+                case "float":
+                    return " = mapped_column(Double)"
+                case _:
+                    return " = mapped_column(Double)"
         else:
             return ""
     else:
@@ -279,24 +280,25 @@ def _compute_data_type(attribute):
     if attribute["is_primitive_attribute"]:
         if attribute["dataType"].startswith("#"):
             datatype = attribute["dataType"].split("#")[1]
-            if datatype == "Integer":
-                return "int"
-            if datatype == "Boolean":
-                return "bool"
-            if datatype == "String":
-                return "str"
-            if datatype == "DateTime":
-                return "datetime"
-            if datatype == "MonthDay":
-                return "str"  # TO BE FIXED
-            if datatype == "Date":
-                return "str"  # TO BE FIXED
-            if datatype == "Time":
-                return "time"
-            if datatype == "String":
-                return "str"
-            else:
-                return "float"
+            match datatype.lower():
+                case "integer":
+                    return "int"
+                case "boolean":
+                    return "bool"
+                case "string":
+                    return "str"
+                case "dateTime":
+                    return "datetime"
+                case "monthday":
+                    return "str"  # TO BE FIXED
+                case "date":
+                    return "str"  # TO BE FIXED
+                case "time":
+                    return "time"
+                case "string":
+                    return "str"
+                case _:
+                    return "float"
     elif attribute["is_datatype_attribute"]:
         return "float"
     elif attribute["is_enum_attribute"]:
