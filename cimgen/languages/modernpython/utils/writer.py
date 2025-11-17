@@ -1,94 +1,128 @@
 from lxml import etree
+import uuid
 from pydantic import BaseModel
+
 from .constants import NAMESPACES
 from .profile import BaseProfile, Profile
-from typing import Dict, Optional
 
 
 class Writer(BaseModel):
     """Class for writing CIM RDF/XML files
 
-    Args:
-        objects (dict): Mapping of rdfid to CIM object
-        Model_metadata (Optional[Dict[str, str]]): any additional data to add in header
-            default = {"modelingAuthoritySet": "www.sogno.energy" }
+    :param dict objects: Mapping {mRID: CIM object}
+    :param dict[str, str] writer_metadata: Any additional data in header
+    (default: {"modelingAuthoritySet": "www.sogno.energy"})
+    :param list[BaseProfile] profile_list: List of profiles to export, default is all cgmes profiles
     """
 
-    objects: Dict
-    writer_metadata: Dict[str, str] = {}
+    objects: dict
+    writer_metadata: dict[str, str] = {
+        "modelingAuthoritySet": "www.sogno.energy",
+        "DependentOn": [],
+    }
+    profile_list: list[BaseProfile] = list(Profile)
 
     def write(
         self,
-        outputfile: str,
-        model_id: str,
-        class_profile_map: Dict[str, BaseProfile] = {},
-        custom_namespaces: Dict[str, str] = {},
+        output_file: str,
+        custom_profiles: list[BaseProfile] = [],
+        custom_namespaces: dict[str, str] = {},
     ) -> dict[BaseProfile, str]:
         """Write CIM RDF/XML files.
         This function writes CIM objects into one or more RDF/XML files separated by profiles.
         Each CIM object will be written to its corresponding profile file depending on class_profile_map.
         But some objects to more than one file if some attribute profiles are not the same as the class profile.
 
-        Args:
-            outputfile (str): Stem of the output file, resulting files: <outputfile>_<profile.long_name>.xml.
-            model_id (str): Stem of the model IDs, resulting IDs: <model_id>_<profile.long_name>.
-            class_profile_map Optional[Dict[str, str]:  Mapping of CIM type to profile.
-            custom_namespaces Optional[Dict[str, str]: {"namespace_prefix": "namespace_uri"}
+        :param str output_file: Stem of the output file, resulting files: <output_file>_<profile.long_name>.xml
+        :param str model_id: Stem of the model IDs, resulting IDs: <model_id>_<profile.long_name>
+        :param list[BaseProfile] custom_profiles: List of custom profiles to export, defaults to []
+        :param dict[str, str] custom_namespaces: {"namespace_prefix": "namespace_uri"}, defaults to {}
 
-        Returns:
-            Mapping of profile to outputfile.
+        :return dict[BaseProfile, str]: Mapping of profile to output_file
         """
-        profile_list: list[BaseProfile] = list(Profile)
-        if class_profile_map:
-            profile_list += {p for p in class_profile_map.values() if p not in profile_list}
+        profile_list = self.profile_list
+        profile_list += {p for p in custom_profiles if p not in profile_list}
         profile_file_map: dict[BaseProfile, str] = {}
-        for profile in profile_list:
-            profile_name = profile.long_name
-            full_file_name = outputfile + "_" + profile.long_name + ".xml"
-            output = self._generate(profile, model_id + "_" + profile_name, custom_namespaces)
+        self.writer_metadata["DependentOn"] = []
+        for profile in sorted(profile_list):
+            profile_id = f"urn:uuid:{uuid.uuid4()}"
+            full_file_name = output_file + "_" + profile.long_name + ".xml"
+            output = self._generate(
+                profile,
+                profile_id,
+                custom_namespaces,
+            )
+            self.writer_metadata["DependentOn"].append(profile_id)
             if output:
-                output.write(full_file_name, pretty_print=True, xml_declaration=True, encoding="UTF-8")
+                output.write(
+                    full_file_name,
+                    pretty_print=True,
+                    xml_declaration=True,
+                    encoding="utf-8",
+                )
                 profile_file_map[profile] = full_file_name
         return profile_file_map
 
     def _generate(
-        self, profile: BaseProfile, model_id: str, custom_namespaces: Dict[str, str] = {}
-    ) -> Optional[etree.ElementTree]:
+        self,
+        profile: BaseProfile,
+        model_id: str,
+        custom_namespaces: dict[str, str] = {},
+    ) -> etree._ElementTree | None:
         """Write CIM objects as RDF/XML data to a string.
 
         This function creates RDF/XML tree corresponding to one profile.
 
-        Args:
-            profile (BaseProfile):    Only data for this profile should be written.
-            model_id (str):   Stem of the model IDs, resulting IDs: <modelID>_<profileName>.
-            custom_namespaces Optional[Dict[str, str]]: {"namespace_prefix": "namespace_uri"}
+        :param BaseProfile profile: Only data for this profile should be written.
+        :param str model_id: Stem of the model IDs, resulting IDs: <modelID>_<profileName>.
+        :param dict[str, str] custom_namespaces: {"namespace_prefix": "namespace_uri"}
 
-        Returns:
-            etree of the profile
+        :return _ElementTree|None: etree of the profile
         """
-        writer_info = {"modelingAuthoritySet": "www.sogno.energy"}
-        writer_info.update(self.writer_metadata)
-        fullmodel = {
+        full_model = {
             "id": model_id,
-            "Model": writer_info,
+            "Model": self.writer_metadata,
         }
-        for uri in profile.uris:
-            fullmodel["Model"].update({"profile": uri})
+        full_model["Model"].update({"profile": profile.uris})
 
-        nsmap = NAMESPACES
-        nsmap.update(custom_namespaces)
+        namespaces_map = NAMESPACES
+        namespaces_map.update(custom_namespaces)
 
-        rdf_namespace = f"""{{{nsmap["rdf"]}}}"""
-        md_namespace = f"""{{{nsmap["md"]}}}"""
+        rdf_namespace = f"""{{{namespaces_map["rdf"]}}}"""
+        md_namespace = f"""{{{namespaces_map["md"]}}}"""
 
-        root = etree.Element(rdf_namespace + "RDF", nsmap=nsmap)
+        root = etree.Element(
+            rdf_namespace + "RDF",
+            nsmap=namespaces_map,
+        )
 
-        # FullModel header
-        model = etree.Element(md_namespace + "FullModel", nsmap=nsmap)
-        model.set(rdf_namespace + "about", "#" + fullmodel["id"])
-        for key, value in fullmodel["Model"].items():
-            element = etree.SubElement(model, md_namespace + "Model." + key)
-            element.text = value
+        # full_model header
+        model = etree.Element(
+            md_namespace + "FullModel",
+            nsmap=namespaces_map,
+        )
+        model.set(rdf_namespace + "about", full_model["id"])
+        for key, value in full_model["Model"].items():
+            if key == "DependentOn":
+                for item in value:
+                    element = etree.SubElement(
+                        model,
+                        md_namespace + "Model." + key,
+                    )
+                    element.set(rdf_namespace + "resource", item)
+            elif isinstance(value, list):
+                for item in value:
+                    element = etree.SubElement(
+                        model,
+                        md_namespace + "Model." + key,
+                    )
+                    element.text = item
+            else:
+                element = etree.SubElement(
+                    model,
+                    md_namespace + "Model." + key,
+                )
+                element.text = value
         root.append(model)
 
         count = 0
