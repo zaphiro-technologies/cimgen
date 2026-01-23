@@ -13,6 +13,6 @@ on:
       - unlabeled
 
 jobs:
- check-pr:
+  check-pr:
     uses: zaphiro-technologies/github-workflows/.github/workflows/check-pr.yaml@main
     secrets: inherit

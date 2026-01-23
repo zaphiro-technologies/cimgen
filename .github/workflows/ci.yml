@@ -1,13 +1,13 @@
 name: CI
 
-on: 
+on:
   # Run the jobs on either push or a pull_request, but not both.
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
 
 concurrency:
   group: ${{ github.ref_name }}-ci
@@ -30,21 +30,21 @@ jobs:
           - javascript
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Install poetry
-      run: pipx install poetry
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-        cache: 'poetry'
-    - name: Install Prerequisites
-      run: poetry install --no-root
-    - name: Configure Build & Test
-      env:
-        LANG: ${{ matrix.lang }}
-      run: |
-        poetry run python build.py --outdir=$(pwd)/CGMES_2.4.15_27JAN2020 --schemadir=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020 --langdir=$LANG
-        ls -l $(pwd)/CGMES_2.4.15_27JAN2020
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: "poetry"
+      - name: Install Prerequisites
+        run: poetry install --no-root
+      - name: Configure Build & Test
+        env:
+          LANG: ${{ matrix.lang }}
+        run: |
+          poetry run python build.py --outdir=$(pwd)/CGMES_2.4.15_27JAN2020 --schemadir=$(pwd)/cgmes_schema/CGMES_2.4.15_27JAN2020 --langdir=$LANG
+          ls -l $(pwd)/CGMES_2.4.15_27JAN2020
   lint:
     # Check if the PR is not from a fork
     if: github.event.pull_request.head.repo.full_name == github.repository
